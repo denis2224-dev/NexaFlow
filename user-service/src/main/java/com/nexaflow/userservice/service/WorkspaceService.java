@@ -1,15 +1,22 @@
 package com.nexaflow.userservice.service;
 
+import com.nexaflow.userservice.domain.Invitation;
 import com.nexaflow.userservice.domain.Membership;
 import com.nexaflow.userservice.domain.Organization;
+import com.nexaflow.userservice.domain.enumeration.InvitationStatus;
 import com.nexaflow.userservice.domain.enumeration.MembershipRole;
+import com.nexaflow.userservice.repository.InvitationRepository;
 import com.nexaflow.userservice.repository.MembershipRepository;
 import com.nexaflow.userservice.repository.OrganizationRepository;
 import com.nexaflow.userservice.security.SecurityUtils;
 import com.nexaflow.userservice.service.dto.CreateWorkspaceRequest;
+import com.nexaflow.userservice.service.dto.InvitationResponseDTO;
+import com.nexaflow.userservice.service.dto.InviteUserRequest;
 import com.nexaflow.userservice.service.dto.WorkspaceDTO;
 import com.nexaflow.userservice.web.rest.errors.BadRequestAlertException;
 import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +28,22 @@ public class WorkspaceService {
 
     private final OrganizationRepository organizationRepository;
     private final MembershipRepository membershipRepository;
+    private final InvitationRepository invitationRepository;
 
-    public WorkspaceService(OrganizationRepository organizationRepository, MembershipRepository membershipRepository) {
+    public WorkspaceService(
+        OrganizationRepository organizationRepository,
+        MembershipRepository membershipRepository,
+        InvitationRepository invitationRepository
+    ) {
         this.organizationRepository = organizationRepository;
         this.membershipRepository = membershipRepository;
+        this.invitationRepository = invitationRepository;
     }
 
     public WorkspaceDTO createWorkspace(CreateWorkspaceRequest request) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
 
         String normalizedSlug = request.getSlug().trim().toLowerCase();
 
@@ -49,9 +62,12 @@ public class WorkspaceService {
 
         Membership ownerMembership = new Membership();
         ownerMembership.setOrganization(savedOrganization);
+
+        // Temporary until connecting full user details from the gateway.
         ownerMembership.setUserId(0L);
         ownerMembership.setUserLogin(currentUserLogin);
         ownerMembership.setUserEmail(currentUserLogin + "@local");
+
         ownerMembership.setRole(MembershipRole.OWNER);
         ownerMembership.setJoinedAt(Instant.now());
         ownerMembership.setActive(true);
@@ -64,6 +80,96 @@ public class WorkspaceService {
             savedOrganization.getSlug(),
             savedOrganization.getDescription(),
             MembershipRole.OWNER
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkspaceDTO> findMyWorkspaces() {
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
+
+        return membershipRepository
+            .findByUserLoginAndActiveTrue(currentUserLogin)
+            .stream()
+            .filter(membership -> Boolean.TRUE.equals(membership.getOrganization().getActive()))
+            .map(this::toWorkspaceDTO)
+            .toList();
+    }
+
+    public InvitationResponseDTO inviteUser(Long organizationId, InviteUserRequest request) {
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
+
+        Membership currentMembership = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
+
+        if (currentMembership.getRole() != MembershipRole.OWNER && currentMembership.getRole() != MembershipRole.ADMIN) {
+            throw new BadRequestAlertException("You do not have permission to invite users", ENTITY_NAME, "nopermission");
+        }
+
+        if (request.getRole() == MembershipRole.OWNER) {
+            throw new BadRequestAlertException("You cannot invite another owner", ENTITY_NAME, "ownernotallowed");
+        }
+
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        boolean alreadyMember = membershipRepository.existsByOrganizationIdAndUserEmailAndActiveTrue(organizationId, normalizedEmail);
+
+        if (alreadyMember) {
+            throw new BadRequestAlertException("This user is already a member", ENTITY_NAME, "alreadymember");
+        }
+
+        boolean alreadyInvited = invitationRepository.existsByOrganizationIdAndEmailAndStatus(
+            organizationId,
+            normalizedEmail,
+            InvitationStatus.PENDING
+        );
+
+        if (alreadyInvited) {
+            throw new BadRequestAlertException("This user already has a pending invitation", ENTITY_NAME, "alreadyinvited");
+        }
+
+        Organization organization = organizationRepository
+            .findById(organizationId)
+            .orElseThrow(() -> new BadRequestAlertException("Workspace not found", ENTITY_NAME, "notfound"));
+
+        Invitation invitation = new Invitation();
+        invitation.setOrganization(organization);
+        invitation.setEmail(normalizedEmail);
+        invitation.setToken(UUID.randomUUID().toString());
+        invitation.setRole(request.getRole());
+        invitation.setStatus(InvitationStatus.PENDING);
+        invitation.setInvitedAt(Instant.now());
+        invitation.setExpiresAt(Instant.now().plusSeconds(7 * 24 * 60 * 60));
+
+        // Temporary until real user ID is propagated.
+        invitation.setInvitedByUserId(0L);
+        invitation.setInvitedByLogin(currentUserLogin);
+
+        Invitation savedInvitation = invitationRepository.save(invitation);
+
+        return new InvitationResponseDTO(
+            savedInvitation.getId(),
+            organization.getId(),
+            savedInvitation.getEmail(),
+            savedInvitation.getToken(),
+            savedInvitation.getRole(),
+            savedInvitation.getStatus(),
+            savedInvitation.getExpiresAt()
+        );
+    }
+
+    private WorkspaceDTO toWorkspaceDTO(Membership membership) {
+        Organization organization = membership.getOrganization();
+        return new WorkspaceDTO(
+            organization.getId(),
+            organization.getName(),
+            organization.getSlug(),
+            organization.getDescription(),
+            membership.getRole()
         );
     }
 }

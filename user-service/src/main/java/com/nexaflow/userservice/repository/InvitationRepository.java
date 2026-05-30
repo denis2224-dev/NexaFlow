@@ -1,6 +1,7 @@
 package com.nexaflow.userservice.repository;
 
 import com.nexaflow.userservice.domain.Invitation;
+import com.nexaflow.userservice.domain.enumeration.InvitationStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -37,4 +38,8 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long>, J
 
     @Query("select invitation from Invitation invitation left join fetch invitation.organization where invitation.id =:id")
     Optional<Invitation> findOneWithToOneRelationships(@Param("id") Long id);
+
+    boolean existsByOrganizationIdAndEmailAndStatus(Long organizationId, String email, InvitationStatus status);
+
+    Optional<Invitation> findOneByToken(String token);
 }

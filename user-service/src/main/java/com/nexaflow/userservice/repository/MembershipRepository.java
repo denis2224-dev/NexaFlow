@@ -37,4 +37,10 @@ public interface MembershipRepository extends JpaRepository<Membership, Long>, J
 
     @Query("select membership from Membership membership left join fetch membership.organization where membership.id =:id")
     Optional<Membership> findOneWithToOneRelationships(@Param("id") Long id);
+
+    List<Membership> findByUserLoginAndActiveTrue(String userLogin);
+
+    Optional<Membership> findOneByOrganizationIdAndUserLoginAndActiveTrue(Long organizationId, String userLogin);
+
+    boolean existsByOrganizationIdAndUserEmailAndActiveTrue(Long organizationId, String userEmail);
 }
