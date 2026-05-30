@@ -1,0 +1,76 @@
+{
+  "annotations": {
+    "changelogDate": "20260529181332"
+  },
+  "applications": ["*"],
+  "clientRootFolder": "user-service",
+  "databaseType": "sql",
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "email",
+      "fieldType": "String",
+      "fieldValidateRules": ["required", "maxlength"],
+      "fieldValidateRulesMaxlength": "254"
+    },
+    {
+      "fieldName": "token",
+      "fieldType": "String",
+      "fieldValidateRules": ["required", "unique", "maxlength"],
+      "fieldValidateRulesMaxlength": "120"
+    },
+    {
+      "fieldName": "role",
+      "fieldType": "MembershipRole",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "OWNER,ADMIN,MEMBER"
+    },
+    {
+      "fieldName": "status",
+      "fieldType": "InvitationStatus",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "PENDING,ACCEPTED,EXPIRED,REVOKED"
+    },
+    {
+      "fieldName": "invitedAt",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "expiresAt",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "acceptedAt",
+      "fieldType": "Instant"
+    },
+    {
+      "fieldName": "invitedByUserId",
+      "fieldType": "Long",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "invitedByLogin",
+      "fieldType": "String",
+      "fieldValidateRules": ["required", "maxlength"],
+      "fieldValidateRulesMaxlength": "100"
+    }
+  ],
+  "jpaMetamodelFiltering": true,
+  "microserviceName": "user-service",
+  "name": "Invitation",
+  "pagination": "pagination",
+  "relationships": [
+    {
+      "otherEntityField": "name",
+      "otherEntityName": "organization",
+      "relationshipName": "organization",
+      "relationshipSide": "left",
+      "relationshipType": "many-to-one",
+      "relationshipValidateRules": "required"
+    }
+  ],
+  "searchEngine": "no",
+  "service": "serviceClass"
+}

@@ -1,0 +1,52 @@
+enum MembershipRole {
+  OWNER,
+  ADMIN,
+  MEMBER
+}
+
+enum InvitationStatus {
+  PENDING,
+  ACCEPTED,
+  EXPIRED,
+  REVOKED
+}
+
+entity Organization {
+  name String required minlength(2) maxlength(100)
+  slug String required unique minlength(2) maxlength(120)
+  description String maxlength(500)
+  createdAt Instant required
+  updatedAt Instant
+  active Boolean required
+}
+
+entity Membership {
+  userId Long required
+  userLogin String required maxlength(100)
+  userEmail String required maxlength(254)
+  role MembershipRole required
+  joinedAt Instant required
+  active Boolean required
+}
+
+entity Invitation {
+  email String required maxlength(254)
+  token String required unique maxlength(120)
+  role MembershipRole required
+  status InvitationStatus required
+  invitedAt Instant required
+  expiresAt Instant required
+  acceptedAt Instant
+  invitedByUserId Long required
+  invitedByLogin String required maxlength(100)
+}
+
+relationship ManyToOne {
+  Membership{organization(name) required} to Organization
+  Invitation{organization(name) required} to Organization
+}
+
+dto * with mapstruct
+service * with serviceClass
+paginate Organization, Membership, Invitation with pagination
+filter *
