@@ -55,8 +55,7 @@ spring:
       host: localhost
       port: 8500
   liquibase:
-    # Remove 'faker' if you do not want the sample data to be loaded automatically
-    contexts: dev, faker
+    contexts: dev
     url: jdbc:postgresql://localhost:5432/NexaFlow
   mail:
     host: localhost

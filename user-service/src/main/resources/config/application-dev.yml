@@ -54,15 +54,19 @@ spring:
           - git-branch=${git.branch:}
       host: localhost
       port: 8500
+  docker:
+    compose:
+      enabled: true
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/user-service
+    url: jdbc:postgresql://localhost:5434/user-service
+    username: user-service
+    password:
     hikari:
       poolName: Hikari
       auto-commit: false
   liquibase:
-    # Remove 'faker' if you do not want the sample data to be loaded automatically
-    contexts: dev, faker
+    contexts: dev
   messages:
     cache-duration: PT1S # 1 second, see the ISO 8601 standard
   thymeleaf:
