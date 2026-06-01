@@ -278,6 +278,27 @@ public class WorkspaceService {
             .toList();
     }
 
+    public void revokeInvitation(Long organizationId, Long invitationId) {
+        String currentUserLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+
+        Membership currentMembership = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
+
+        if (currentMembership.getRole() != MembershipRole.OWNER && currentMembership.getRole() != MembershipRole.ADMIN) {
+            throw new BadRequestAlertException("You do not have permission to revoke invitations", ENTITY_NAME, "nopermission");
+        }
+
+        Invitation invitation = invitationRepository
+            .findOneByIdAndOrganizationIdAndStatus(invitationId, organizationId, InvitationStatus.PENDING)
+            .orElseThrow(() -> new BadRequestAlertException("Pending invitation not found", ENTITY_NAME, "invitationnotfound"));
+
+        invitation.setStatus(InvitationStatus.REVOKED);
+        invitationRepository.save(invitation);
+    }
+
     private WorkspaceDTO toWorkspaceDTO(Membership membership) {
         Organization organization = membership.getOrganization();
         return new WorkspaceDTO(

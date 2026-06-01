@@ -61,4 +61,10 @@ public class WorkspaceResource {
     public ResponseEntity<List<InvitationResponseDTO>> getWorkspaceInvitations(@PathVariable Long organizationId) {
         return ResponseEntity.ok(workspaceService.getWorkspaceInvitations(organizationId));
     }
+
+    @DeleteMapping("/{organizationId}/invitations/{invitationId}")
+    public ResponseEntity<Void> revokeInvitation(@PathVariable Long organizationId, @PathVariable Long invitationId) {
+        workspaceService.revokeInvitation(organizationId, invitationId);
+        return ResponseEntity.noContent().build();
+    }
 }
