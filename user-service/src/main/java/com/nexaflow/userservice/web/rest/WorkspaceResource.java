@@ -56,4 +56,9 @@ public class WorkspaceResource {
     public ResponseEntity<List<MemberDTO>> getWorkspaceMembers(@PathVariable Long organizationId) {
         return ResponseEntity.ok(workspaceService.getWorkspaceMembers(organizationId));
     }
+
+    @GetMapping("/{organizationId}/invitations")
+    public ResponseEntity<List<InvitationResponseDTO>> getWorkspaceInvitations(@PathVariable Long organizationId) {
+        return ResponseEntity.ok(workspaceService.getWorkspaceInvitations(organizationId));
+    }
 }

@@ -247,6 +247,37 @@ public class WorkspaceService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<InvitationResponseDTO> getWorkspaceInvitations(Long organizationId) {
+        String currentUserLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+
+        Membership currentMembership = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
+
+        if (currentMembership.getRole() != MembershipRole.OWNER && currentMembership.getRole() != MembershipRole.ADMIN) {
+            throw new BadRequestAlertException("You do not have permission to view invitations", ENTITY_NAME, "nopermission");
+        }
+
+        return invitationRepository
+            .findByOrganizationIdAndStatus(organizationId, InvitationStatus.PENDING)
+            .stream()
+            .map(invitation ->
+                new InvitationResponseDTO(
+                    invitation.getId(),
+                    invitation.getOrganization().getId(),
+                    invitation.getEmail(),
+                    invitation.getToken(),
+                    invitation.getRole(),
+                    invitation.getStatus(),
+                    invitation.getExpiresAt()
+                )
+            )
+            .toList();
+    }
+
     private WorkspaceDTO toWorkspaceDTO(Membership membership) {
         Organization organization = membership.getOrganization();
         return new WorkspaceDTO(
