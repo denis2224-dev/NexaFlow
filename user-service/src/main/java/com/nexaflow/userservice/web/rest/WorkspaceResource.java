@@ -2,6 +2,7 @@ package com.nexaflow.userservice.web.rest;
 
 import com.nexaflow.userservice.service.WorkspaceService;
 import com.nexaflow.userservice.service.dto.AcceptInvitationRequest;
+import com.nexaflow.userservice.service.dto.ChangeMemberRoleRequest;
 import com.nexaflow.userservice.service.dto.CreateWorkspaceRequest;
 import com.nexaflow.userservice.service.dto.InvitationResponseDTO;
 import com.nexaflow.userservice.service.dto.InviteUserRequest;
@@ -66,5 +67,15 @@ public class WorkspaceResource {
     public ResponseEntity<Void> revokeInvitation(@PathVariable Long organizationId, @PathVariable Long invitationId) {
         workspaceService.revokeInvitation(organizationId, invitationId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{organizationId}/members/{membershipId}/role")
+    public ResponseEntity<MemberDTO> changeMemberRole(
+        @PathVariable Long organizationId,
+        @PathVariable Long membershipId,
+        @Valid @RequestBody ChangeMemberRoleRequest request
+    ) {
+        MemberDTO result = workspaceService.changeMemberRole(organizationId, membershipId, request);
+        return ResponseEntity.ok(result);
     }
 }

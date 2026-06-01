@@ -10,6 +10,7 @@ import com.nexaflow.userservice.repository.MembershipRepository;
 import com.nexaflow.userservice.repository.OrganizationRepository;
 import com.nexaflow.userservice.security.SecurityUtils;
 import com.nexaflow.userservice.service.dto.AcceptInvitationRequest;
+import com.nexaflow.userservice.service.dto.ChangeMemberRoleRequest;
 import com.nexaflow.userservice.service.dto.CreateWorkspaceRequest;
 import com.nexaflow.userservice.service.dto.InvitationResponseDTO;
 import com.nexaflow.userservice.service.dto.InviteUserRequest;
@@ -297,6 +298,49 @@ public class WorkspaceService {
 
         invitation.setStatus(InvitationStatus.REVOKED);
         invitationRepository.save(invitation);
+    }
+
+    public MemberDTO changeMemberRole(Long organizationId, Long membershipId, ChangeMemberRoleRequest request) {
+        String currentUserLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+
+        Membership currentMembership = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
+
+        if (currentMembership.getRole() != MembershipRole.OWNER) {
+            throw new BadRequestAlertException("Only the workspace owner can change member roles", ENTITY_NAME, "nopermission");
+        }
+
+        if (request.getRole() == MembershipRole.OWNER) {
+            throw new BadRequestAlertException("You cannot assign OWNER role with this endpoint", ENTITY_NAME, "ownernotallowed");
+        }
+
+        Membership targetMembership = membershipRepository
+            .findOneByIdAndOrganizationIdAndActiveTrue(membershipId, organizationId)
+            .orElseThrow(() -> new BadRequestAlertException("Membership not found", ENTITY_NAME, "membershipnotfound"));
+
+        if (targetMembership.getRole() == MembershipRole.OWNER) {
+            throw new BadRequestAlertException("Owner role cannot be changed", ENTITY_NAME, "ownercannotbechanged");
+        }
+
+        if (targetMembership.getId().equals(currentMembership.getId())) {
+            throw new BadRequestAlertException("You cannot change your own role", ENTITY_NAME, "cannotchangeyourself");
+        }
+
+        targetMembership.setRole(request.getRole());
+
+        Membership savedMembership = membershipRepository.save(targetMembership);
+
+        return new MemberDTO(
+            savedMembership.getId(),
+            savedMembership.getUserId(),
+            savedMembership.getUserLogin(),
+            savedMembership.getUserEmail(),
+            savedMembership.getRole(),
+            savedMembership.getActive()
+        );
     }
 
     private WorkspaceDTO toWorkspaceDTO(Membership membership) {
