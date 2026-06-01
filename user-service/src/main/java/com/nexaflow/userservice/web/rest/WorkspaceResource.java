@@ -1,9 +1,11 @@
 package com.nexaflow.userservice.web.rest;
 
 import com.nexaflow.userservice.service.WorkspaceService;
+import com.nexaflow.userservice.service.dto.AcceptInvitationRequest;
 import com.nexaflow.userservice.service.dto.CreateWorkspaceRequest;
 import com.nexaflow.userservice.service.dto.InvitationResponseDTO;
 import com.nexaflow.userservice.service.dto.InviteUserRequest;
+import com.nexaflow.userservice.service.dto.MemberDTO;
 import com.nexaflow.userservice.service.dto.WorkspaceDTO;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -42,5 +44,16 @@ public class WorkspaceResource {
         return ResponseEntity.created(new URI("/api/workspaces/" + organizationId + "/invitations/" + result.getInvitationId())).body(
             result
         );
+    }
+
+    @PostMapping("/invitations/accept")
+    public ResponseEntity<WorkspaceDTO> acceptInvitation(@Valid @RequestBody AcceptInvitationRequest request) {
+        WorkspaceDTO result = workspaceService.acceptInvitation(request);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{organizationId}/members")
+    public ResponseEntity<List<MemberDTO>> getWorkspaceMembers(@PathVariable Long organizationId) {
+        return ResponseEntity.ok(workspaceService.getWorkspaceMembers(organizationId));
     }
 }

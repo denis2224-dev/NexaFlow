@@ -43,4 +43,6 @@ public interface MembershipRepository extends JpaRepository<Membership, Long>, J
     Optional<Membership> findOneByOrganizationIdAndUserLoginAndActiveTrue(Long organizationId, String userLogin);
 
     boolean existsByOrganizationIdAndUserEmailAndActiveTrue(Long organizationId, String userEmail);
+
+    List<Membership> findByOrganizationIdAndActiveTrue(Long organizationId);
 }

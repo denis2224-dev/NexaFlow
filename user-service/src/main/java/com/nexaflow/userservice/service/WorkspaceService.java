@@ -9,9 +9,11 @@ import com.nexaflow.userservice.repository.InvitationRepository;
 import com.nexaflow.userservice.repository.MembershipRepository;
 import com.nexaflow.userservice.repository.OrganizationRepository;
 import com.nexaflow.userservice.security.SecurityUtils;
+import com.nexaflow.userservice.service.dto.AcceptInvitationRequest;
 import com.nexaflow.userservice.service.dto.CreateWorkspaceRequest;
 import com.nexaflow.userservice.service.dto.InvitationResponseDTO;
 import com.nexaflow.userservice.service.dto.InviteUserRequest;
+import com.nexaflow.userservice.service.dto.MemberDTO;
 import com.nexaflow.userservice.service.dto.WorkspaceDTO;
 import com.nexaflow.userservice.web.rest.errors.BadRequestAlertException;
 import java.time.Instant;
@@ -160,6 +162,89 @@ public class WorkspaceService {
             savedInvitation.getStatus(),
             savedInvitation.getExpiresAt()
         );
+    }
+
+    public WorkspaceDTO acceptInvitation(AcceptInvitationRequest request) {
+        String currentUserLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+
+        Invitation invitation = invitationRepository
+            .findOneByToken(request.getToken())
+            .orElseThrow(() -> new BadRequestAlertException("Invitation not found", ENTITY_NAME, "invitationnotfound"));
+
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new BadRequestAlertException("Invitation is not pending", ENTITY_NAME, "invitationnotpending");
+        }
+
+        if (invitation.getExpiresAt().isBefore(Instant.now())) {
+            invitation.setStatus(InvitationStatus.EXPIRED);
+            invitationRepository.save(invitation);
+
+            throw new BadRequestAlertException("Invitation has expired", ENTITY_NAME, "invitationexpired");
+        }
+
+        Organization organization = invitation.getOrganization();
+
+        boolean alreadyMember = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organization.getId(), currentUserLogin)
+            .isPresent();
+
+        if (alreadyMember) {
+            throw new BadRequestAlertException("You are already a member of this workspace", ENTITY_NAME, "alreadymember");
+        }
+
+        Membership membership = new Membership();
+        membership.setOrganization(organization);
+
+        // Temporary until real user ID/email are propagated from the gateway.
+        membership.setUserId(0L);
+        membership.setUserLogin(currentUserLogin);
+        membership.setUserEmail(invitation.getEmail());
+
+        membership.setRole(invitation.getRole());
+        membership.setJoinedAt(Instant.now());
+        membership.setActive(true);
+
+        membershipRepository.save(membership);
+
+        invitation.setStatus(InvitationStatus.ACCEPTED);
+        invitation.setAcceptedAt(Instant.now());
+        invitationRepository.save(invitation);
+
+        return new WorkspaceDTO(
+            organization.getId(),
+            organization.getName(),
+            organization.getSlug(),
+            organization.getDescription(),
+            membership.getRole()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberDTO> getWorkspaceMembers(Long organizationId) {
+        String currentUserLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+
+        membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
+
+        return membershipRepository
+            .findByOrganizationIdAndActiveTrue(organizationId)
+            .stream()
+            .map(membership ->
+                new MemberDTO(
+                    membership.getId(),
+                    membership.getUserId(),
+                    membership.getUserLogin(),
+                    membership.getUserEmail(),
+                    membership.getRole(),
+                    membership.getActive()
+                )
+            )
+            .toList();
     }
 
     private WorkspaceDTO toWorkspaceDTO(Membership membership) {
