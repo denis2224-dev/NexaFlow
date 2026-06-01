@@ -343,6 +343,39 @@ public class WorkspaceService {
         );
     }
 
+    public void removeMember(Long organizationId, Long membershipId) {
+        String currentUserLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+
+        Membership currentMembership = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
+
+        Membership targetMembership = membershipRepository
+            .findOneByIdAndOrganizationIdAndActiveTrue(membershipId, organizationId)
+            .orElseThrow(() -> new BadRequestAlertException("Membership not found", ENTITY_NAME, "membershipnotfound"));
+
+        if (targetMembership.getRole() == MembershipRole.OWNER) {
+            throw new BadRequestAlertException("Owner cannot be removed from the workspace", ENTITY_NAME, "ownercannotberemoved");
+        }
+
+        if (targetMembership.getId().equals(currentMembership.getId())) {
+            throw new BadRequestAlertException("You cannot remove yourself from the workspace", ENTITY_NAME, "cannotremoveyourself");
+        }
+
+        if (currentMembership.getRole() == MembershipRole.MEMBER) {
+            throw new BadRequestAlertException("Members cannot remove users", ENTITY_NAME, "nopermission");
+        }
+
+        if (currentMembership.getRole() == MembershipRole.ADMIN && targetMembership.getRole() == MembershipRole.ADMIN) {
+            throw new BadRequestAlertException("Admins cannot remove other admins", ENTITY_NAME, "nopermission");
+        }
+
+        targetMembership.setActive(false);
+        membershipRepository.save(targetMembership);
+    }
+
     private WorkspaceDTO toWorkspaceDTO(Membership membership) {
         Organization organization = membership.getOrganization();
         return new WorkspaceDTO(

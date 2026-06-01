@@ -78,4 +78,10 @@ public class WorkspaceResource {
         MemberDTO result = workspaceService.changeMemberRole(organizationId, membershipId, request);
         return ResponseEntity.ok(result);
     }
+
+    @DeleteMapping("/{organizationId}/members/{membershipId}")
+    public ResponseEntity<Void> removeMember(@PathVariable Long organizationId, @PathVariable Long membershipId) {
+        workspaceService.removeMember(organizationId, membershipId);
+        return ResponseEntity.noContent().build();
+    }
 }

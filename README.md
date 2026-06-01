@@ -28,19 +28,25 @@ nexaflow-platform/
 └── .gitignore
 ```
 
-## Current APIs
+## Current Custom APIs
 
-The user service currently exposes:
+The user service currently exposes these custom workspace APIs:
 
-- `POST /api/workspaces`
-- `GET /api/workspaces/my`
-- `POST /api/workspaces/{organizationId}/invitations`
+```text
+POST   /api/workspaces
+GET    /api/workspaces/my
+PATCH  /api/workspaces/{organizationId}
 
-`POST /api/workspaces` creates an organization and an `OWNER` membership for the authenticated user.
+POST   /api/workspaces/{organizationId}/invitations
+GET    /api/workspaces/{organizationId}/invitations
+DELETE /api/workspaces/{organizationId}/invitations/{invitationId}
 
-Planned:
+POST   /api/workspaces/invitations/accept
 
-- `POST /api/invitations/accept`
+GET    /api/workspaces/{organizationId}/members
+PATCH  /api/workspaces/{organizationId}/members/{membershipId}/role
+DELETE /api/workspaces/{organizationId}/members/{membershipId}
+```
 
 ## Local Development
 
