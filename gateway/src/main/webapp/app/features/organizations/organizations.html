@@ -1,0 +1,153 @@
+<jhi-page-header
+  eyebrow="Organizations"
+  title="Workspaces"
+  description="Create and manage organization scopes backed by user-service. Empty states are shown until real workspace data exists."
+>
+  <button class="nf-button" type="button" (click)="openCreateDialog()">
+    <fa-icon icon="plus" />
+    <span>Create workspace</span>
+  </button>
+</jhi-page-header>
+
+@if (successMessage()) {
+  <div class="nf-toast nf-toast--success">{{ successMessage() }}</div>
+}
+
+@if (errorMessage()) {
+  <div class="nf-toast nf-toast--error">{{ errorMessage() }}</div>
+}
+
+<jhi-section-panel title="Your organizations" description="Workspaces returned by GET /api/workspaces/my through the gateway.">
+  @if (isLoading()) {
+    <jhi-state-panel tone="loading" title="Loading organizations" description="Fetching your workspace memberships from user-service." />
+  } @else if (workspaces().length === 0 && !errorMessage()) {
+    <jhi-state-panel
+      title="No organizations yet"
+      description="Create a workspace or accept an invitation when invitation acceptance is available."
+    >
+      <button class="nf-button" type="button" (click)="openCreateDialog()">
+        <fa-icon icon="plus" />
+        <span>Create workspace</span>
+      </button>
+    </jhi-state-panel>
+  } @else if (workspaces().length > 0) {
+    <div class="nf-table-wrap">
+      <table class="nf-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th class="nf-table__actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (workspace of workspaces(); track trackWorkspace($index, workspace)) {
+            <tr>
+              <td>
+                <div class="nf-workspace-name">
+                  <strong>{{ workspace.name || 'Unnamed workspace' }}</strong>
+                  @if (workspace.description) {
+                    <span>{{ workspace.description }}</span>
+                  }
+                </div>
+              </td>
+              <td>{{ workspace.slug || '-' }}</td>
+              <td>
+                <span class="nf-pill">{{ workspace.role || 'Member' }}</span>
+              </td>
+              <td>
+                <span class="nf-status" [class.nf-status--muted]="workspace.active === false">
+                  {{ workspace.active === false ? 'Inactive' : 'Active' }}
+                </span>
+              </td>
+              <td class="nf-table__actions">
+                @if (getWorkspaceId(workspace) !== null) {
+                  <button class="nf-link-button" type="button" (click)="openInviteDialog(workspace)">
+                    <fa-icon icon="user-plus" />
+                    <span>Invite</span>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</jhi-section-panel>
+
+@if (createDialogOpen()) {
+  <div class="nf-dialog-backdrop" role="presentation" (click)="closeCreateDialog()">
+    <section class="nf-dialog" role="dialog" aria-modal="true" aria-labelledby="create-workspace-title" (click)="$event.stopPropagation()">
+      <header class="nf-dialog__header">
+        <div>
+          <h2 id="create-workspace-title">Create workspace</h2>
+          <p>Create an organization and owner membership for your current account.</p>
+        </div>
+        <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeCreateDialog()">
+          <fa-icon icon="times" />
+        </button>
+      </header>
+
+      <form class="nf-form" [formGroup]="createForm" (ngSubmit)="createWorkspace()">
+        <label>
+          <span>Name</span>
+          <input type="text" formControlName="name" placeholder="Workspace name" autocomplete="organization" />
+        </label>
+        <label>
+          <span>Slug</span>
+          <input type="text" formControlName="slug" placeholder="workspace-slug" autocomplete="off" />
+        </label>
+        <label>
+          <span>Description</span>
+          <textarea formControlName="description" rows="3" placeholder="Optional workspace description"></textarea>
+        </label>
+        <footer class="nf-dialog__footer">
+          <button class="nf-button nf-button--secondary" type="button" (click)="closeCreateDialog()">Cancel</button>
+          <button class="nf-button" type="submit" [disabled]="createForm.invalid || isSaving()">
+            {{ isSaving() ? 'Creating...' : 'Create workspace' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (inviteDialogOpen()) {
+  <div class="nf-dialog-backdrop" role="presentation" (click)="closeInviteDialog()">
+    <section class="nf-dialog" role="dialog" aria-modal="true" aria-labelledby="invite-user-title" (click)="$event.stopPropagation()">
+      <header class="nf-dialog__header">
+        <div>
+          <h2 id="invite-user-title">Invite user</h2>
+          <p>{{ selectedWorkspace()?.name || 'Selected workspace' }}</p>
+        </div>
+        <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeInviteDialog()">
+          <fa-icon icon="times" />
+        </button>
+      </header>
+
+      <form class="nf-form" [formGroup]="inviteForm" (ngSubmit)="sendInvitation()">
+        <label>
+          <span>Email</span>
+          <input type="email" formControlName="email" placeholder="teammate@example.com" autocomplete="email" />
+        </label>
+        <label>
+          <span>Role</span>
+          <select formControlName="role">
+            @for (role of roleOptions; track role) {
+              <option [value]="role">{{ role }}</option>
+            }
+          </select>
+        </label>
+        <footer class="nf-dialog__footer">
+          <button class="nf-button nf-button--secondary" type="button" (click)="closeInviteDialog()">Cancel</button>
+          <button class="nf-button" type="submit" [disabled]="inviteForm.invalid || isInviting()">
+            {{ isInviting() ? 'Sending...' : 'Create invitation' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}

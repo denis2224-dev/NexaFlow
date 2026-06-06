@@ -1,8 +1,20 @@
-import { ChangeDetectionStrategy, Component, DOCUMENT, OnInit, Renderer2, RendererFactory2, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DOCUMENT,
+  DestroyRef,
+  OnInit,
+  Renderer2,
+  RendererFactory2,
+  inject,
+  signal,
+} from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
+import { filter } from 'rxjs';
 
 import { AppPageTitleStrategy } from 'app/app-page-title-strategy';
 import { AccountService } from 'app/core/auth/account.service';
@@ -17,10 +29,14 @@ import PageRibbon from '../profiles/page-ribbon';
   imports: [RouterOutlet, Footer, PageRibbon],
 })
 export default class Main implements OnInit {
+  readonly isAppShellRoute = signal(false);
+  readonly isFullViewportRoute = signal(false);
+
   private readonly renderer: Renderer2;
   private readonly htmlElement: HTMLElement;
 
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly appPageTitleStrategy = inject(AppPageTitleStrategy);
   private readonly accountService = inject(AccountService);
   private readonly document = inject(DOCUMENT);
@@ -33,6 +49,14 @@ export default class Main implements OnInit {
   }
 
   ngOnInit(): void {
+    this.syncShellRoute(this.router.url);
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(event => this.syncShellRoute(event.urlAfterRedirects));
+
     // try to log in automatically
     this.accountService.identity().subscribe();
 
@@ -41,5 +65,10 @@ export default class Main implements OnInit {
       dayjs.locale(langChangeEvent.lang);
       this.renderer.setAttribute(this.htmlElement, 'lang', langChangeEvent.lang);
     });
+  }
+
+  private syncShellRoute(url: string): void {
+    this.isAppShellRoute.set(url === '/app' || url.startsWith('/app/'));
+    this.isFullViewportRoute.set(this.isAppShellRoute() || url === '/login');
   }
 }

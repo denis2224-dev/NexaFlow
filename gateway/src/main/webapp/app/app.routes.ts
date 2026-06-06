@@ -25,6 +25,33 @@ const routes: Routes = [
     loadChildren: () => import('./admin/admin.routes'),
   },
   {
+    path: 'app',
+    canActivate: [UserRouteAccessService],
+    loadComponent: () => import('./layouts/app-shell/app-shell'),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard',
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard'),
+        title: 'Dashboard',
+      },
+      {
+        path: 'organizations',
+        loadComponent: () => import('./features/organizations/organizations'),
+        title: 'Organizations',
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/profile'),
+        title: 'Profile',
+      },
+    ],
+  },
+  {
     path: 'account',
     loadChildren: () => import('./account/account.route'),
   },

@@ -1,13 +1,19 @@
 <jhi-page-ribbon />
 
-<div>
-  <router-outlet name="navbar" />
-</div>
-
-<div class="container-fluid">
-  <div class="card jh-card">
-    <router-outlet />
+@if (!isFullViewportRoute()) {
+  <div>
+    <router-outlet name="navbar" />
   </div>
+}
 
-  <jhi-footer />
-</div>
+@if (isFullViewportRoute()) {
+  <router-outlet />
+} @else {
+  <div class="container-fluid">
+    <div class="card jh-card">
+      <router-outlet />
+    </div>
+
+    <jhi-footer />
+  </div>
+}

@@ -1,0 +1,12 @@
+<div class="nf-state-panel" [class.nf-state-panel--loading]="tone() === 'loading'" [class.nf-state-panel--error]="tone() === 'error'">
+  <span class="nf-state-panel__indicator" aria-hidden="true"></span>
+  <div>
+    <h3>{{ title() }}</h3>
+    @if (description()) {
+      <p>{{ description() }}</p>
+    }
+    <div class="nf-state-panel__actions">
+      <ng-content />
+    </div>
+  </div>
+</div>

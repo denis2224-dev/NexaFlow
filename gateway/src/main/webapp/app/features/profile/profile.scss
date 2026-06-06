@@ -1,0 +1,128 @@
+.nf-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(17rem, 0.7fr);
+  gap: 1rem;
+}
+
+.nf-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.2rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.nf-profile-card__avatar {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(125, 211, 252, 0.26);
+  border-radius: 0.9rem;
+  background: rgba(14, 165, 233, 0.16);
+  color: #e0f2fe;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.nf-profile-card__copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nf-profile-card__copy strong {
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nf-profile-card__copy span {
+  overflow: hidden;
+  margin-top: 0.18rem;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nf-definition-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0.4rem 1.2rem 1.2rem;
+}
+
+.nf-definition-list div {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.nf-definition-list div:last-child {
+  border-bottom: 0;
+}
+
+dt {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.nf-action-list {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+}
+
+.nf-action-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 0.65rem;
+  background: rgba(15, 23, 42, 0.62);
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.nf-action-link:hover {
+  border-color: rgba(56, 189, 248, 0.28);
+  color: #f8fafc;
+}
+
+.nf-action-link fa-icon {
+  color: #38bdf8;
+}
+
+@media (max-width: 860px) {
+  .nf-profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .nf-definition-list div {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+}

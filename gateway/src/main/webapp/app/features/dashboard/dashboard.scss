@@ -1,0 +1,108 @@
+.nf-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.8fr);
+  gap: 1rem;
+}
+
+.nf-dashboard-grid jhi-section-panel:first-child {
+  grid-column: span 2;
+}
+
+.nf-workspace-summary,
+.nf-account-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.nf-kicker {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.nf-workspace-summary strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: #f8fafc;
+  font-size: 1.8rem;
+  font-weight: 750;
+}
+
+.nf-workspace-summary p,
+.nf-account-panel p {
+  margin: 0.25rem 0 0;
+  color: #94a3b8;
+  font-size: 0.86rem;
+}
+
+.nf-account-panel {
+  justify-content: flex-start;
+}
+
+.nf-account-panel__avatar {
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.85rem;
+  background: rgba(56, 189, 248, 0.16);
+  color: #e0f2fe;
+  font-weight: 800;
+}
+
+.nf-account-panel strong {
+  color: #f8fafc;
+}
+
+.nf-account-panel .nf-button {
+  margin-left: auto;
+}
+
+.nf-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 2.35rem;
+  padding: 0 0.9rem;
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 0.65rem;
+  background: rgba(14, 165, 233, 0.16);
+  color: #e0f2fe;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nf-button--secondary {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5e1;
+}
+
+@media (max-width: 920px) {
+  .nf-dashboard-grid,
+  .nf-dashboard-grid jhi-section-panel:first-child {
+    display: grid;
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .nf-workspace-summary,
+  .nf-account-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nf-account-panel .nf-button {
+    margin-left: 0;
+  }
+}

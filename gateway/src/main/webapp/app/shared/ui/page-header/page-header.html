@@ -1,0 +1,14 @@
+<header class="nf-page-header">
+  <div class="nf-page-header__copy">
+    @if (eyebrow()) {
+      <span class="nf-page-header__eyebrow">{{ eyebrow() }}</span>
+    }
+    <h1>{{ title() }}</h1>
+    @if (description()) {
+      <p>{{ description() }}</p>
+    }
+  </div>
+  <div class="nf-page-header__actions">
+    <ng-content />
+  </div>
+</header>

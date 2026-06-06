@@ -13,6 +13,7 @@ import { TranslateDirective } from 'app/shared/language';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslateModule, ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
+  styleUrl: './login.scss',
 })
 export default class Login implements OnInit, AfterViewInit {
   username = viewChild.required<ElementRef>('username');
@@ -33,7 +34,7 @@ export default class Login implements OnInit, AfterViewInit {
     // if already authenticated then navigate to home page
     this.accountService.identity().subscribe(() => {
       if (this.accountService.isAuthenticated()) {
-        this.router.navigate(['']);
+        this.router.navigate(['/app/dashboard']);
       }
     });
   }
@@ -48,7 +49,7 @@ export default class Login implements OnInit, AfterViewInit {
         this.authenticationError.set(false);
         if (!this.router.currentNavigation()) {
           // There were no routing during login (eg from navigationToStoredUrl)
-          this.router.navigate(['']);
+          this.router.navigate(['/app/dashboard']);
         }
       },
       error: () => this.authenticationError.set(true),

@@ -1,0 +1,182 @@
+:host {
+  display: block;
+}
+
+.nf-auth {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.1), transparent 20rem), linear-gradient(135deg, #020617, #08111f 48%, #020617);
+  color: #e5e7eb;
+}
+
+.nf-auth__panel {
+  width: min(100%, 29rem);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.95rem;
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 18rem), linear-gradient(180deg, #0f172a, #07111f);
+  box-shadow: 0 24px 80px rgba(2, 6, 23, 0.34);
+}
+
+.nf-auth__brand,
+.nf-auth__header,
+.nf-auth__form,
+.nf-auth__footer {
+  padding: 1.2rem;
+}
+
+.nf-auth__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.nf-auth__mark {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: rgba(14, 165, 233, 0.2);
+  color: #e0f2fe;
+  font-weight: 800;
+}
+
+.nf-auth__brand strong,
+.nf-auth__brand span {
+  display: block;
+}
+
+.nf-auth__brand strong {
+  color: #f8fafc;
+  font-size: 0.96rem;
+}
+
+.nf-auth__brand span {
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.nf-auth__header {
+  padding-bottom: 0.4rem;
+}
+
+.nf-auth__header h1 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.nf-auth__header p {
+  margin: 0.55rem 0 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.nf-auth__error {
+  margin: 0.3rem 1.2rem 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(251, 113, 133, 0.32);
+  border-radius: 0.7rem;
+  background: rgba(127, 29, 29, 0.18);
+  color: #fecdd3;
+  font-size: 0.86rem;
+}
+
+.nf-auth__form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.nf-auth__form label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.nf-auth__form label > span {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.nf-auth__form input[type='text'],
+.nf-auth__form input[type='password'] {
+  height: 2.75rem;
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 0.7rem;
+  background: rgba(2, 6, 23, 0.62);
+  color: #f8fafc;
+  font: inherit;
+  outline: none;
+  padding: 0 0.85rem;
+}
+
+.nf-auth__form input:focus {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.1);
+}
+
+.nf-auth__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.nf-auth__form .nf-auth__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nf-auth__check input {
+  accent-color: #0ea5e9;
+}
+
+.nf-auth a {
+  color: #7dd3fc;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.nf-auth a:hover {
+  color: #bae6fd;
+}
+
+.nf-auth__submit {
+  height: 2.75rem;
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 0.7rem;
+  background: rgba(14, 165, 233, 0.18);
+  color: #e0f2fe;
+  font: inherit;
+  font-weight: 750;
+}
+
+.nf-auth__footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  font-size: 0.84rem;
+}
+
+.nf-auth__footer span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+@media (max-width: 520px) {
+  .nf-auth__row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}

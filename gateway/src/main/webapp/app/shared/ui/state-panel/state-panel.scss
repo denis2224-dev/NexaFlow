@@ -1,0 +1,59 @@
+.nf-state-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 1.2rem;
+  color: #cbd5e1;
+}
+
+.nf-state-panel__indicator {
+  width: 0.72rem;
+  height: 0.72rem;
+  margin-top: 0.34rem;
+  border-radius: 999px;
+  background: #38bdf8;
+  box-shadow: 0 0 0 0.32rem rgba(56, 189, 248, 0.12);
+}
+
+.nf-state-panel--loading .nf-state-panel__indicator {
+  animation: nf-pulse 1.2s ease-in-out infinite;
+}
+
+.nf-state-panel--error .nf-state-panel__indicator {
+  background: #fb7185;
+  box-shadow: 0 0 0 0.32rem rgba(251, 113, 133, 0.12);
+}
+
+h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+p {
+  max-width: 42rem;
+  margin: 0.4rem 0 0;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.nf-state-panel__actions {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+@keyframes nf-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
