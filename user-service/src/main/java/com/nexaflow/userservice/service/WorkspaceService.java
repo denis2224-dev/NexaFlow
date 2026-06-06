@@ -100,6 +100,33 @@ public class WorkspaceService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
+    public WorkspaceDTO getWorkspace(Long organizationId) {
+        String currentUserLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+
+        Membership currentMembership = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
+
+        Organization organization = organizationRepository
+            .findById(organizationId)
+            .orElseThrow(() -> new BadRequestAlertException("Workspace not found", ENTITY_NAME, "notfound"));
+
+        if (!organization.getActive()) {
+            throw new BadRequestAlertException("Workspace is not active", ENTITY_NAME, "workspacenotactive");
+        }
+
+        return new WorkspaceDTO(
+            organization.getId(),
+            organization.getName(),
+            organization.getSlug(),
+            organization.getDescription(),
+            currentMembership.getRole()
+        );
+    }
+
     public InvitationResponseDTO inviteUser(Long organizationId, InviteUserRequest request) {
         String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
             new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")

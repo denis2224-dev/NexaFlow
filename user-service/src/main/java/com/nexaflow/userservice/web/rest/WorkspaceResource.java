@@ -36,6 +36,11 @@ public class WorkspaceResource {
         return ResponseEntity.ok(workspaceService.findMyWorkspaces());
     }
 
+    @GetMapping("/{organizationId}")
+    public ResponseEntity<WorkspaceDTO> getWorkspace(@PathVariable Long organizationId) {
+        return ResponseEntity.ok(workspaceService.getWorkspace(organizationId));
+    }
+
     @PostMapping("/{organizationId}/invitations")
     public ResponseEntity<InvitationResponseDTO> inviteUser(
         @PathVariable Long organizationId,
