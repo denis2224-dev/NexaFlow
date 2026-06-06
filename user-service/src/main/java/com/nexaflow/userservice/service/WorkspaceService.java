@@ -19,6 +19,7 @@ import com.nexaflow.userservice.service.dto.WorkspaceDTO;
 import com.nexaflow.userservice.web.rest.errors.BadRequestAlertException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,9 +45,7 @@ public class WorkspaceService {
     }
 
     public WorkspaceDTO createWorkspace(CreateWorkspaceRequest request) {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
-            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
-        );
+        CurrentUser currentUser = getCurrentUser();
 
         String normalizedSlug = request.getSlug().trim().toLowerCase();
 
@@ -65,12 +64,9 @@ public class WorkspaceService {
 
         Membership ownerMembership = new Membership();
         ownerMembership.setOrganization(savedOrganization);
-
-        // Temporary until connecting full user details from the gateway.
-        ownerMembership.setUserId(0L);
-        ownerMembership.setUserLogin(currentUserLogin);
-        ownerMembership.setUserEmail(currentUserLogin + "@local");
-
+        ownerMembership.setUserId(currentUser.id());
+        ownerMembership.setUserLogin(currentUser.login());
+        ownerMembership.setUserEmail(currentUser.email());
         ownerMembership.setRole(MembershipRole.OWNER);
         ownerMembership.setJoinedAt(Instant.now());
         ownerMembership.setActive(true);
@@ -128,12 +124,10 @@ public class WorkspaceService {
     }
 
     public InvitationResponseDTO inviteUser(Long organizationId, InviteUserRequest request) {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
-            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
-        );
+        CurrentUser currentUser = getCurrentUser();
 
         Membership currentMembership = membershipRepository
-            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUser.login())
             .orElseThrow(() -> new BadRequestAlertException("You are not a member of this workspace", ENTITY_NAME, "notmember"));
 
         if (currentMembership.getRole() != MembershipRole.OWNER && currentMembership.getRole() != MembershipRole.ADMIN) {
@@ -144,7 +138,7 @@ public class WorkspaceService {
             throw new BadRequestAlertException("You cannot invite another owner", ENTITY_NAME, "ownernotallowed");
         }
 
-        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        String normalizedEmail = normalizeEmail(request.getEmail());
 
         boolean alreadyMember = membershipRepository.existsByOrganizationIdAndUserEmailAndActiveTrue(organizationId, normalizedEmail);
 
@@ -175,9 +169,8 @@ public class WorkspaceService {
         invitation.setInvitedAt(Instant.now());
         invitation.setExpiresAt(Instant.now().plusSeconds(7 * 24 * 60 * 60));
 
-        // Temporary until real user ID is propagated.
-        invitation.setInvitedByUserId(0L);
-        invitation.setInvitedByLogin(currentUserLogin);
+        invitation.setInvitedByUserId(currentUser.id());
+        invitation.setInvitedByLogin(currentUser.login());
 
         Invitation savedInvitation = invitationRepository.save(invitation);
 
@@ -193,9 +186,7 @@ public class WorkspaceService {
     }
 
     public WorkspaceDTO acceptInvitation(AcceptInvitationRequest request) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        CurrentUser currentUser = getCurrentUser();
 
         Invitation invitation = invitationRepository
             .findOneByToken(request.getToken())
@@ -212,10 +203,14 @@ public class WorkspaceService {
             throw new BadRequestAlertException("Invitation has expired", ENTITY_NAME, "invitationexpired");
         }
 
+        if (!normalizeEmail(invitation.getEmail()).equals(currentUser.email())) {
+            throw new BadRequestAlertException("Invitation email does not match the current user", ENTITY_NAME, "invitationemailmismatch");
+        }
+
         Organization organization = invitation.getOrganization();
 
         boolean alreadyMember = membershipRepository
-            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organization.getId(), currentUserLogin)
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organization.getId(), currentUser.login())
             .isPresent();
 
         if (alreadyMember) {
@@ -224,12 +219,9 @@ public class WorkspaceService {
 
         Membership membership = new Membership();
         membership.setOrganization(organization);
-
-        // Temporary until real user ID/email are propagated from the gateway.
-        membership.setUserId(0L);
-        membership.setUserLogin(currentUserLogin);
-        membership.setUserEmail(invitation.getEmail());
-
+        membership.setUserId(currentUser.id());
+        membership.setUserLogin(currentUser.login());
+        membership.setUserEmail(currentUser.email());
         membership.setRole(invitation.getRole());
         membership.setJoinedAt(Instant.now());
         membership.setActive(true);
@@ -413,4 +405,25 @@ public class WorkspaceService {
             membership.getRole()
         );
     }
+
+    private CurrentUser getCurrentUser() {
+        String login = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        Long id = SecurityUtils
+            .getCurrentUserId()
+            .orElseThrow(() -> new BadRequestAlertException("Current user id is missing from the token", ENTITY_NAME, "useridmissing"));
+        String email = SecurityUtils
+            .getCurrentUserEmail()
+            .map(WorkspaceService::normalizeEmail)
+            .orElseThrow(() -> new BadRequestAlertException("Current user email is missing from the token", ENTITY_NAME, "useremailmissing"));
+
+        return new CurrentUser(id, login, email);
+    }
+
+    private static String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ENGLISH);
+    }
+
+    private record CurrentUser(Long id, String login, String email) {}
 }

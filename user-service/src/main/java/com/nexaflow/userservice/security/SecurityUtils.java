@@ -20,6 +20,10 @@ public final class SecurityUtils {
 
     public static final String AUTHORITIES_CLAIM = "auth";
 
+    public static final String USER_ID_CLAIM = "userId";
+
+    public static final String USER_EMAIL_CLAIM = "email";
+
     private SecurityUtils() {}
 
     /**
@@ -53,6 +57,49 @@ public final class SecurityUtils {
     public static Optional<String> getCurrentUserJWT() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication()).map(SecurityUtils::extractCredentials);
+    }
+
+    /**
+     * Get the id of the current user from the JWT claims.
+     *
+     * @return the id of the current user.
+     */
+    public static Optional<Long> getCurrentUserId() {
+        return getCurrentUserJwt().map(jwt -> jwt.getClaim(USER_ID_CLAIM)).flatMap(SecurityUtils::toLong);
+    }
+
+    /**
+     * Get the email of the current user from the JWT claims.
+     *
+     * @return the email of the current user.
+     */
+    public static Optional<String> getCurrentUserEmail() {
+        return getCurrentUserJwt().map(jwt -> jwt.getClaimAsString(USER_EMAIL_CLAIM)).filter(email -> !email.isBlank());
+    }
+
+    private static Optional<Jwt> getCurrentUserJwt() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(securityContext.getAuthentication())
+            .map(Authentication::getPrincipal)
+            .filter(Jwt.class::isInstance)
+            .map(Jwt.class::cast);
+    }
+
+    private static Optional<Long> toLong(Object value) {
+        if (value instanceof Long l) {
+            return Optional.of(l);
+        }
+        if (value instanceof Number number) {
+            return Optional.of(number.longValue());
+        }
+        if (value instanceof String s && !s.isBlank()) {
+            try {
+                return Optional.of(Long.parseLong(s));
+            } catch (NumberFormatException ignored) {
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
     }
 
     private static String extractCredentials(Authentication authentication) {

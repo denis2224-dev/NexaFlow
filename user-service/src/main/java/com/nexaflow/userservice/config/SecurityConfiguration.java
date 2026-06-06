@@ -33,6 +33,15 @@ public class SecurityConfiguration {
                     .requestMatchers(HttpMethod.POST, "/api/authenticate").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/authenticate").permitAll()
                     .requestMatchers("/api/admin/**").hasAuthority(AuthoritiesConstants.ADMIN)
+                    .requestMatchers(
+                        "/api/organizations",
+                        "/api/organizations/**",
+                        "/api/memberships",
+                        "/api/memberships/**",
+                        "/api/invitations",
+                        "/api/invitations/**"
+                    )
+                    .denyAll()
                     .requestMatchers("/api/**").authenticated()
                     .requestMatchers("/v3/api-docs/**").hasAuthority(AuthoritiesConstants.ADMIN)
                     .requestMatchers("/management/health").permitAll()

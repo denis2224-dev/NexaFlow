@@ -22,6 +22,8 @@ public final class SecurityUtils {
 
     public static final String USER_ID_CLAIM = "userId";
 
+    public static final String USER_EMAIL_CLAIM = "email";
+
     private SecurityUtils() {}
 
     /**

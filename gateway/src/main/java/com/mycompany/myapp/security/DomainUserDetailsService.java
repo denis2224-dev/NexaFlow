@@ -59,14 +59,20 @@ public class DomainUserDetailsService implements ReactiveUserDetailsService {
     public static class UserWithId extends org.springframework.security.core.userdetails.User {
 
         private final Long id;
+        private final String email;
 
-        public UserWithId(String login, String password, Collection<? extends GrantedAuthority> authorities, Long id) {
+        public UserWithId(String login, String password, Collection<? extends GrantedAuthority> authorities, Long id, String email) {
             super(login, password, authorities);
             this.id = id;
+            this.email = email;
         }
 
         public Long getId() {
             return id;
+        }
+
+        public String getEmail() {
+            return email;
         }
 
         @Override
@@ -84,7 +90,8 @@ public class DomainUserDetailsService implements ReactiveUserDetailsService {
                 user.getLogin(),
                 user.getPassword(),
                 user.getAuthorities().stream().map(Authority::getName).map(SimpleGrantedAuthority::new).toList(),
-                user.getId()
+                user.getId(),
+                user.getEmail()
             );
         }
     }

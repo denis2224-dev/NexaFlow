@@ -2,6 +2,7 @@ package com.mycompany.myapp.web.rest;
 
 import static com.mycompany.myapp.security.SecurityUtils.AUTHORITIES_CLAIM;
 import static com.mycompany.myapp.security.SecurityUtils.JWT_ALGORITHM;
+import static com.mycompany.myapp.security.SecurityUtils.USER_EMAIL_CLAIM;
 import static com.mycompany.myapp.security.SecurityUtils.USER_ID_CLAIM;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -99,6 +100,7 @@ public class AuthenticateController {
             .claim(AUTHORITIES_CLAIM, authorities);
         if (authentication.getPrincipal() instanceof UserWithId user) {
             builder.claim(USER_ID_CLAIM, user.getId());
+            builder.claim(USER_EMAIL_CLAIM, user.getEmail());
         }
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
