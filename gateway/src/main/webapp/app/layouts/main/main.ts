@@ -19,14 +19,13 @@ import { filter } from 'rxjs';
 import { AppPageTitleStrategy } from 'app/app-page-title-strategy';
 import { AccountService } from 'app/core/auth/account.service';
 import Footer from '../footer/footer';
-import PageRibbon from '../profiles/page-ribbon';
 
 @Component({
   selector: 'jhi-main',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './main.html',
   providers: [AppPageTitleStrategy],
-  imports: [RouterOutlet, Footer, PageRibbon],
+  imports: [RouterOutlet, Footer],
 })
 export default class Main implements OnInit {
   readonly isAppShellRoute = signal(false);
@@ -69,6 +68,14 @@ export default class Main implements OnInit {
 
   private syncShellRoute(url: string): void {
     this.isAppShellRoute.set(url === '/app' || url.startsWith('/app/'));
-    this.isFullViewportRoute.set(this.isAppShellRoute() || url === '/login');
+    this.isFullViewportRoute.set(
+      this.isAppShellRoute() ||
+        url === '/' ||
+        url === '/login' ||
+        url.startsWith('/account/register') ||
+        url.startsWith('/account/settings') ||
+        url.startsWith('/account/password') ||
+        url.startsWith('/account/reset/'),
+    );
   }
 }

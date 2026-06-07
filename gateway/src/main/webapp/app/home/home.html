@@ -1,82 +1,146 @@
-<div class="row">
-  <div class="col-md-3">
-    <span class="hipster img-fluid rounded"></span>
-  </div>
+<main class="nf-home">
+  <section class="nf-hero" aria-labelledby="nexaflow-title">
+    <div class="nf-hero__copy">
+      <p class="nf-kicker">NexaFlow</p>
+      <h1 id="nexaflow-title">Workspaces built for focused teams.</h1>
+      <p class="nf-hero__subtitle">
+        NexaFlow helps teams organize projects, manage members, assign work, and keep every workspace moving with clarity.
+      </p>
 
-  <div class="col-md-9">
-    <h1 class="display-4"><span jhiTranslate="home.title">Welcome, Java Hipster!</span> (Nexa Flow)</h1>
-
-    <p class="lead" jhiTranslate="home.subtitle">This is your homepage</p>
-
-    <div>
-      @if (account() !== null) {
-        <div class="alert alert-success">
-          @if (account(); as accountRef) {
-            <span id="home-logged-message" jhiTranslate="home.logged.message" [translateValues]="{ username: accountRef.login }"
-              >You are logged in as user &quot;{{ accountRef.login }}&quot;.</span
-            >
-          }
-        </div>
-      } @else {
-        <div class="alert alert-warning">
-          <span jhiTranslate="global.messages.info.authenticated.prefix">If you want to </span>
-          <a class="alert-link" (click)="login()" jhiTranslate="global.messages.info.authenticated.link">sign in</a
-          ><span jhiTranslate="global.messages.info.authenticated.suffix"
-            >, you can try the default accounts:<br />- Administrator (login=&quot;admin&quot; and password=&quot;admin&quot;) <br />- User
-            (login=&quot;user&quot; and password=&quot;user&quot;).</span
-          >
-        </div>
-
-        <div class="alert alert-warning">
-          <span jhiTranslate="global.messages.info.register.noaccount">You don&apos;t have an account yet?</span>&nbsp;
-          <a class="alert-link" routerLink="/account/register" jhiTranslate="global.messages.info.register.link">Register a new account</a>
-        </div>
-      }
+      <div class="nf-actions">
+        @if (account() !== null) {
+          <a class="nf-button" routerLink="/app/dashboard">Open dashboard</a>
+        } @else {
+          <a class="nf-button" routerLink="/account/register">Get started</a>
+          <a class="nf-button nf-button--secondary" routerLink="/login">Sign in</a>
+        }
+      </div>
     </div>
 
-    <p jhiTranslate="home.question">If you have any questions on JHipster:</p>
+    <div class="nf-preview" aria-label="NexaFlow product preview">
+      <aside class="nf-preview__sidebar">
+        <div class="nf-preview__brand"></div>
+        <span></span>
+        <span></span>
+        <span class="is-active"></span>
+        <span></span>
+      </aside>
+
+      <section class="nf-preview__panel">
+        <header class="nf-preview__header">
+          <div>
+            <span class="nf-preview__eyebrow"></span>
+            <strong></strong>
+          </div>
+          <div class="nf-avatar-row" aria-hidden="true">
+            <i></i>
+            <i></i>
+            <i></i>
+          </div>
+        </header>
+
+        <div class="nf-workspace-card">
+          <div>
+            <span></span>
+            <strong></strong>
+          </div>
+          <em>Active</em>
+        </div>
+
+        <div class="nf-task-list" aria-label="Task preview">
+          <div class="nf-task-row">
+            <span></span>
+            <p></p>
+            <em>In review</em>
+          </div>
+          <div class="nf-task-row">
+            <span></span>
+            <p></p>
+            <em>Planned</em>
+          </div>
+          <div class="nf-task-row">
+            <span></span>
+            <p></p>
+            <em>Active</em>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="nf-section" aria-labelledby="features-title">
+    <div class="nf-section__header">
+      <p class="nf-kicker">Platform</p>
+      <h2 id="features-title">Everything a team needs to stay organized.</h2>
+    </div>
+
+    <div class="nf-card-grid">
+      <article class="nf-card">
+        <h3>Workspaces</h3>
+        <p>Create dedicated spaces for teams, departments, or clients.</p>
+      </article>
+      <article class="nf-card">
+        <h3>Projects</h3>
+        <p>Keep work organized from planning to delivery.</p>
+      </article>
+      <article class="nf-card">
+        <h3>Members &amp; Roles</h3>
+        <p>Invite people and control access with clear permissions.</p>
+      </article>
+      <article class="nf-card">
+        <h3>Tasks</h3>
+        <p>Track responsibilities, priorities, and progress in one place.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="nf-section nf-workflow" aria-labelledby="workflow-title">
+    <div class="nf-section__header">
+      <p class="nf-kicker">Workflow</p>
+      <h2 id="workflow-title">A simple path from setup to execution.</h2>
+    </div>
+
+    <div class="nf-steps">
+      <article>
+        <span>01</span>
+        <h3>Create your workspace</h3>
+      </article>
+      <article>
+        <span>02</span>
+        <h3>Invite your team</h3>
+      </article>
+      <article>
+        <span>03</span>
+        <h3>Start managing work</h3>
+      </article>
+    </div>
+  </section>
+
+  <section class="nf-section nf-value" aria-labelledby="value-title">
+    <div>
+      <p class="nf-kicker">Built For</p>
+      <h2 id="value-title">Teams that need structure without friction.</h2>
+    </div>
 
     <ul>
-      <li>
-        <a href="https://www.jhipster.tech/" target="_blank" rel="noopener noreferrer" jhiTranslate="home.link.homepage"
-          >JHipster homepage</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://stackoverflow.com/tags/jhipster/info"
-          target="_blank"
-          rel="noopener noreferrer"
-          jhiTranslate="home.link.stackoverflow"
-          >JHipster on Stack Overflow</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/jhipster/generator-jhipster/issues?state=open"
-          target="_blank"
-          rel="noopener noreferrer"
-          jhiTranslate="home.link.bugtracker"
-          >JHipster bug tracker</a
-        >
-      </li>
-      <li>
-        <a href="https://gitter.im/jhipster/generator-jhipster" target="_blank" rel="noopener noreferrer" jhiTranslate="home.link.chat"
-          >JHipster public chat room</a
-        >
-      </li>
-      <li>
-        <a href="https://twitter.com/jhipster" target="_blank" rel="noopener noreferrer" jhiTranslate="home.link.follow"
-          >follow &#64;jhipster on Twitter</a
-        >
-      </li>
+      <li>clear ownership</li>
+      <li>organized collaboration</li>
+      <li>simple role management</li>
+      <li>scalable workspace structure</li>
     </ul>
+  </section>
 
-    <p>
-      <span jhiTranslate="home.like">If you like JHipster, don&apos;t forget to give us a star on</span>
-      <a href="https://github.com/jhipster/generator-jhipster" target="_blank" rel="noopener noreferrer" jhiTranslate="home.github"
-        >GitHub</a
-      >!
-    </p>
-  </div>
-</div>
+  <section class="nf-final-cta" aria-labelledby="final-cta-title">
+    <h2 id="final-cta-title">Bring your team&rsquo;s work into one clean flow.</h2>
+    <div class="nf-actions">
+      @if (account() !== null) {
+        <a class="nf-button" routerLink="/app/dashboard">Open dashboard</a>
+      } @else {
+        <a class="nf-button" routerLink="/account/register">Get started</a>
+        <a class="nf-button nf-button--secondary" routerLink="/login">Sign in</a>
+      }
+    </div>
+  </section>
+
+  <footer class="nf-footer">NexaFlow &middot; Workspace management for modern teams</footer>
+</main>
