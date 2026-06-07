@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -5,7 +6,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { finalize } from 'rxjs';
 
 import { InvitationService } from 'app/core/nexaflow/invitation.service';
-import { Workspace, WorkspaceRole } from 'app/core/nexaflow/nexaflow.model';
+import { MembershipService } from 'app/core/nexaflow/membership.service';
+import { Invitation, Membership, Workspace, WorkspaceRole } from 'app/core/nexaflow/nexaflow.model';
 import { WorkspaceService } from 'app/core/nexaflow/workspace.service';
 import PageHeader from 'app/shared/ui/page-header/page-header';
 import SectionPanel from 'app/shared/ui/section-panel/section-panel';
@@ -23,11 +25,23 @@ export default class Organizations implements OnInit {
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly isInviting = signal(false);
+  readonly isAccepting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly createDialogOpen = signal(false);
   readonly inviteDialogOpen = signal(false);
+  readonly acceptDialogOpen = signal(false);
+  readonly membersDialogOpen = signal(false);
+  readonly invitationsDialogOpen = signal(false);
   readonly selectedWorkspace = signal<Workspace | null>(null);
+  readonly members = signal<Membership[]>([]);
+  readonly invitations = signal<Invitation[]>([]);
+  readonly isMembersLoading = signal(false);
+  readonly isInvitationsLoading = signal(false);
+  readonly membersError = signal<string | null>(null);
+  readonly invitationsError = signal<string | null>(null);
+  readonly invitationsSuccess = signal<string | null>(null);
+  readonly revokingInvitationId = signal<number | null>(null);
   readonly roleOptions: WorkspaceRole[] = ['ADMIN', 'MEMBER'];
 
   readonly createForm = new FormGroup({
@@ -41,8 +55,16 @@ export default class Organizations implements OnInit {
     role: new FormControl<WorkspaceRole>('MEMBER', { nonNullable: true, validators: [Validators.required] }),
   });
 
+  readonly acceptForm = new FormGroup({
+    token: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8), Validators.maxLength(500)],
+    }),
+  });
+
   private readonly workspaceService = inject(WorkspaceService);
   private readonly invitationService = inject(InvitationService);
+  private readonly membershipService = inject(MembershipService);
 
   ngOnInit(): void {
     this.loadWorkspaces();
@@ -56,13 +78,230 @@ export default class Organizations implements OnInit {
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: workspaces => this.workspaces.set(workspaces),
-        error: () => {
+        error: error => {
           this.workspaces.set([]);
-          this.errorMessage.set(
-            'Organizations could not be loaded. Confirm user-service is running, registered in Consul, and reachable through the gateway.',
-          );
+          this.errorMessage.set(this.extractErrorMessage(error, 'Organizations could not be loaded through the gateway.'));
         },
       });
+  }
+
+  openAcceptDialog(): void {
+    this.successMessage.set(null);
+    this.errorMessage.set(null);
+    this.acceptForm.reset({ token: '' });
+    this.acceptDialogOpen.set(true);
+  }
+
+  closeAcceptDialog(): void {
+    if (!this.isAccepting()) {
+      this.acceptDialogOpen.set(false);
+    }
+  }
+
+  acceptInvitation(): void {
+    if (this.acceptForm.invalid) {
+      this.acceptForm.markAllAsTouched();
+      return;
+    }
+
+    this.isAccepting.set(true);
+    this.errorMessage.set(null);
+    this.invitationService
+      .accept(this.acceptForm.getRawValue())
+      .pipe(finalize(() => this.isAccepting.set(false)))
+      .subscribe({
+        next: () => {
+          this.acceptDialogOpen.set(false);
+          this.successMessage.set('Invitation accepted.');
+          this.loadWorkspaces();
+        },
+        error: error => {
+          this.errorMessage.set(this.extractErrorMessage(error, 'Invitation could not be accepted.'));
+        },
+      });
+  }
+
+  openMembersDialog(workspace: Workspace): void {
+    const workspaceId = this.getWorkspaceId(workspace);
+    if (workspaceId === null) {
+      this.errorMessage.set('This workspace response does not include an organization identifier for members.');
+      return;
+    }
+
+    this.selectedWorkspace.set(workspace);
+    this.members.set([]);
+    this.membersError.set(null);
+    this.membersDialogOpen.set(true);
+    this.loadMembers(workspaceId);
+  }
+
+  closeMembersDialog(): void {
+    this.membersDialogOpen.set(false);
+    this.members.set([]);
+    this.membersError.set(null);
+    this.selectedWorkspace.set(null);
+  }
+
+  loadMembers(organizationId: number): void {
+    this.isMembersLoading.set(true);
+    this.membersError.set(null);
+    this.membershipService
+      .getWorkspaceMembers(organizationId)
+      .pipe(finalize(() => this.isMembersLoading.set(false)))
+      .subscribe({
+        next: members => this.members.set(members),
+        error: error => {
+          this.members.set([]);
+          this.membersError.set(this.extractErrorMessage(error, 'Members could not be loaded.'));
+        },
+      });
+  }
+
+  openInvitationsDialog(workspace: Workspace): void {
+    const workspaceId = this.getWorkspaceId(workspace);
+    if (workspaceId === null) {
+      this.errorMessage.set('This workspace response does not include an organization identifier for invitations.');
+      return;
+    }
+
+    this.selectedWorkspace.set(workspace);
+    this.invitations.set([]);
+    this.invitationsError.set(null);
+    this.invitationsSuccess.set(null);
+    this.invitationsDialogOpen.set(true);
+    this.loadInvitations(workspaceId);
+  }
+
+  closeInvitationsDialog(): void {
+    if (this.revokingInvitationId() === null) {
+      this.invitationsDialogOpen.set(false);
+      this.invitations.set([]);
+      this.invitationsError.set(null);
+      this.invitationsSuccess.set(null);
+      this.selectedWorkspace.set(null);
+    }
+  }
+
+  loadInvitations(organizationId: number): void {
+    this.isInvitationsLoading.set(true);
+    this.invitationsError.set(null);
+    this.invitationService
+      .getForWorkspace(organizationId)
+      .pipe(finalize(() => this.isInvitationsLoading.set(false)))
+      .subscribe({
+        next: invitations => this.invitations.set(invitations),
+        error: error => {
+          this.invitations.set([]);
+          this.invitationsError.set(this.extractErrorMessage(error, 'Invitations could not be loaded.'));
+        },
+      });
+  }
+
+  revokeInvitation(invitation: Invitation): void {
+    const workspace = this.selectedWorkspace();
+    const workspaceId = workspace ? this.getWorkspaceId(workspace) : null;
+    const invitationId = this.getInvitationId(invitation);
+
+    if (workspaceId === null || invitationId === null) {
+      this.invitationsError.set('This invitation response does not include the identifiers required to revoke it.');
+      return;
+    }
+
+    this.revokingInvitationId.set(invitationId);
+    this.invitationsError.set(null);
+    this.invitationsSuccess.set(null);
+    this.invitationService
+      .revokeFromWorkspace(workspaceId, invitationId)
+      .pipe(finalize(() => this.revokingInvitationId.set(null)))
+      .subscribe({
+        next: () => {
+          this.invitationsSuccess.set('Invitation revoked.');
+          this.loadInvitations(workspaceId);
+        },
+        error: error => {
+          this.invitationsError.set(this.extractErrorMessage(error, 'Invitation could not be revoked.'));
+        },
+      });
+  }
+
+  refreshSelectedInvitations(): void {
+    const workspace = this.selectedWorkspace();
+    const workspaceId = workspace ? this.getWorkspaceId(workspace) : null;
+
+    if (workspaceId !== null) {
+      this.loadInvitations(workspaceId);
+    }
+  }
+
+  refreshSelectedMembers(): void {
+    const workspace = this.selectedWorkspace();
+    const workspaceId = workspace ? this.getWorkspaceId(workspace) : null;
+
+    if (workspaceId !== null) {
+      this.loadMembers(workspaceId);
+    }
+  }
+
+  getInvitationId(invitation: Invitation): number | null {
+    return invitation.invitationId ?? invitation.id ?? null;
+  }
+
+  getMemberId(member: Membership): number | null {
+    return member.membershipId ?? member.id ?? null;
+  }
+
+  getMemberName(member: Membership): string {
+    return member.userLogin ?? member.login ?? member.userEmail ?? member.email ?? (member.userId ? `User ${member.userId}` : '-');
+  }
+
+  getMemberEmail(member: Membership): string | null {
+    const email = member.userEmail ?? member.email ?? null;
+    const login = member.userLogin ?? member.login ?? null;
+
+    return email && email !== login ? email : null;
+  }
+
+  getInvitationEmail(invitation: Invitation): string {
+    return invitation.email ?? invitation.userEmail ?? invitation.userLogin ?? '-';
+  }
+
+  getActiveLabel(active: boolean | null | undefined): string {
+    if (active === true) {
+      return 'Active';
+    }
+
+    if (active === false) {
+      return 'Inactive';
+    }
+
+    return '-';
+  }
+
+  formatDate(value: string | null | undefined): string {
+    if (!value) {
+      return '-';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  }
+
+  trackMember(index: number, member: Membership): number | string {
+    return this.getMemberId(member) ?? member.userId ?? member.userLogin ?? member.userEmail ?? index;
+  }
+
+  trackInvitation(index: number, invitation: Invitation): number | string {
+    return this.getInvitationId(invitation) ?? invitation.token ?? invitation.email ?? index;
   }
 
   openCreateDialog(): void {
@@ -95,7 +334,7 @@ export default class Organizations implements OnInit {
           this.successMessage.set('Workspace created.');
           this.loadWorkspaces();
         },
-        error: () => this.errorMessage.set('Workspace could not be created. Check the backend validation response and try again.'),
+        error: error => this.errorMessage.set(this.extractErrorMessage(error, 'Workspace could not be created.')),
       });
   }
 
@@ -138,7 +377,7 @@ export default class Organizations implements OnInit {
           this.selectedWorkspace.set(null);
           this.successMessage.set('Invitation created.');
         },
-        error: () => this.errorMessage.set('Invitation could not be created. Confirm the invitation endpoint is enabled in user-service.'),
+        error: error => this.errorMessage.set(this.extractErrorMessage(error, 'Invitation could not be created.')),
       });
   }
 
@@ -148,5 +387,33 @@ export default class Organizations implements OnInit {
 
   trackWorkspace(index: number, workspace: Workspace): number | string {
     return this.getWorkspaceId(workspace) ?? workspace.slug ?? index;
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const payload = error.error as { detail?: string; message?: string; title?: string } | string | null;
+
+      if (typeof payload === 'string') {
+        return payload.trim() || fallback;
+      }
+
+      if (payload?.detail) {
+        return payload.detail;
+      }
+
+      if (payload?.message) {
+        return payload.message;
+      }
+
+      if (payload?.title) {
+        return payload.title;
+      }
+
+      if (error.status) {
+        return `${fallback} (${error.status})`;
+      }
+    }
+
+    return fallback;
   }
 }

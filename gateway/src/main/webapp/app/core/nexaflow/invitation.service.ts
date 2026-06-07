@@ -17,7 +17,15 @@ export class InvitationService {
     return this.http.post<Invitation>(`${this.workspaceResourceUrl}/${organizationId}/invitations`, request);
   }
 
+  getForWorkspace(organizationId: number): Observable<Invitation[]> {
+    return this.http.get<Invitation[]>(`${this.workspaceResourceUrl}/${organizationId}/invitations`);
+  }
+
   accept(request: InvitationAcceptRequest): Observable<Workspace> {
     return this.http.post<Workspace>(`${this.workspaceResourceUrl}/invitations/accept`, request);
+  }
+
+  revokeFromWorkspace(organizationId: number, invitationId: number): Observable<unknown> {
+    return this.http.delete<unknown>(`${this.workspaceResourceUrl}/${organizationId}/invitations/${invitationId}`);
   }
 }

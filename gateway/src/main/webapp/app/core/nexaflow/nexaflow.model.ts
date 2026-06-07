@@ -8,20 +8,27 @@ export interface Workspace {
   name?: string;
   slug?: string;
   description?: string | null;
-  role?: WorkspaceRole;
+  role?: string;
   active?: boolean;
   createdAt?: string;
+  createdDate?: string;
   updatedAt?: string | null;
+  lastModifiedDate?: string | null;
 }
 
 export interface Membership {
   id?: number;
+  membershipId?: number;
   userId?: number;
   userLogin?: string;
   userEmail?: string;
-  role?: WorkspaceRole;
+  email?: string;
+  login?: string;
+  role?: string;
   joinedAt?: string;
+  createdDate?: string;
   active?: boolean;
+  status?: string;
   organization?: Workspace;
   organizationId?: number;
 }
@@ -31,10 +38,13 @@ export interface Invitation {
   invitationId?: number;
   organizationId?: number;
   email?: string;
+  userEmail?: string;
+  userLogin?: string;
   token?: string;
-  role?: WorkspaceRole;
-  status?: InvitationStatus;
+  role?: string;
+  status?: string;
   invitedAt?: string;
+  createdDate?: string;
   expiresAt?: string;
   acceptedAt?: string | null;
   invitedByUserId?: number;

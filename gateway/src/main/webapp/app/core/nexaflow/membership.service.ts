@@ -10,10 +10,9 @@ import { Membership } from './nexaflow.model';
 export class MembershipService {
   private readonly http = inject(HttpClient);
   private readonly applicationConfigService = inject(ApplicationConfigService);
-  private readonly resourceUrl = this.applicationConfigService.getEndpointFor('api/memberships', 'user-service');
+  private readonly workspaceResourceUrl = this.applicationConfigService.getEndpointFor('api/workspaces', 'user-service');
 
-  query(): Observable<Membership[]> {
-    // TODO: Confirm whether the backend returns a plain array or a paged response before binding this to UI.
-    return this.http.get<Membership[]>(this.resourceUrl);
+  getWorkspaceMembers(organizationId: number): Observable<Membership[]> {
+    return this.http.get<Membership[]>(`${this.workspaceResourceUrl}/${organizationId}/members`);
   }
 }
