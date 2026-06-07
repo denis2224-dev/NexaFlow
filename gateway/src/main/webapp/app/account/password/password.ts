@@ -14,6 +14,7 @@ import { PasswordService } from './password.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslateModule, ReactiveFormsModule, PasswordStrengthBar],
   templateUrl: './password.html',
+  styleUrl: '../account-form.scss',
 })
 export default class Password {
   readonly doNotMatch = signal(false);

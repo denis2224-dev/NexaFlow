@@ -16,6 +16,7 @@ const initialAccount: Account = {} as Account;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslateModule, FindLanguageFromKeyPipe, AlertError, ReactiveFormsModule],
   templateUrl: './settings.html',
+  styleUrl: '../account-form.scss',
 })
 export default class Settings implements OnInit {
   readonly success = signal(false);

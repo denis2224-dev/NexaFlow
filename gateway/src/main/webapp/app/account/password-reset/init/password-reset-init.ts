@@ -13,6 +13,7 @@ import { PasswordResetInitService } from './password-reset-init.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslateModule, AlertError, ReactiveFormsModule],
   templateUrl: './password-reset-init.html',
+  styleUrl: '../../account-form.scss',
 })
 export default class PasswordResetInit implements AfterViewInit {
   email = viewChild.required<ElementRef>('email');

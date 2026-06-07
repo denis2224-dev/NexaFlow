@@ -14,6 +14,7 @@ import { PasswordResetFinishService } from './password-reset-finish.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslateModule, RouterLink, ReactiveFormsModule, PasswordStrengthBar],
   templateUrl: './password-reset-finish.html',
+  styleUrl: '../../account-form.scss',
 })
 export default class PasswordResetFinish implements OnInit, AfterViewInit {
   newPassword = viewChild.required<ElementRef>('newPassword');
