@@ -80,7 +80,7 @@ export default class Organizations implements OnInit {
         next: workspaces => this.workspaces.set(workspaces),
         error: error => {
           this.workspaces.set([]);
-          this.errorMessage.set(this.extractErrorMessage(error, 'Organizations could not be loaded through the gateway.'));
+          this.errorMessage.set(this.extractErrorMessage(error, 'Organizations could not be loaded. Please try again.'));
         },
       });
   }
@@ -124,7 +124,7 @@ export default class Organizations implements OnInit {
   openMembersDialog(workspace: Workspace): void {
     const workspaceId = this.getWorkspaceId(workspace);
     if (workspaceId === null) {
-      this.errorMessage.set('This workspace response does not include an organization identifier for members.');
+      this.errorMessage.set('Members cannot be loaded for this workspace yet.');
       return;
     }
 
@@ -160,7 +160,7 @@ export default class Organizations implements OnInit {
   openInvitationsDialog(workspace: Workspace): void {
     const workspaceId = this.getWorkspaceId(workspace);
     if (workspaceId === null) {
-      this.errorMessage.set('This workspace response does not include an organization identifier for invitations.');
+      this.errorMessage.set('Invitations cannot be loaded for this workspace yet.');
       return;
     }
 
@@ -203,7 +203,7 @@ export default class Organizations implements OnInit {
     const invitationId = this.getInvitationId(invitation);
 
     if (workspaceId === null || invitationId === null) {
-      this.invitationsError.set('This invitation response does not include the identifiers required to revoke it.');
+      this.invitationsError.set('This invitation cannot be revoked yet.');
       return;
     }
 
@@ -341,7 +341,7 @@ export default class Organizations implements OnInit {
   openInviteDialog(workspace: Workspace): void {
     const workspaceId = this.getWorkspaceId(workspace);
     if (workspaceId === null) {
-      this.errorMessage.set('This workspace response does not include an organization identifier for invitations.');
+      this.errorMessage.set('Invitations cannot be created for this workspace yet.');
       return;
     }
 

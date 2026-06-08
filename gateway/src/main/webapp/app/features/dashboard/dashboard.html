@@ -1,19 +1,15 @@
 <jhi-page-header
   eyebrow="Dashboard"
   title="Command center"
-  description="A focused workspace for operations, organization context, and connected services. Metrics will appear here only after real services provide them."
+  description="A focused workspace for your organizations, team context, and daily work."
 />
 
 <div class="nf-dashboard-grid">
   <jhi-section-panel title="Workspace context" description="Your active organization scope for NexaFlow operations.">
     @if (isLoading()) {
-      <jhi-state-panel
-        tone="loading"
-        title="Loading workspace context"
-        description="Checking your organizations through the user service."
-      />
+      <jhi-state-panel tone="loading" title="Loading workspace context" description="Checking your organizations." />
     } @else if (errorMessage()) {
-      <jhi-state-panel tone="error" title="Workspace service unavailable" [description]="errorMessage()!" />
+      <jhi-state-panel tone="error" title="Workspace unavailable" [description]="errorMessage()!" />
     } @else if (hasWorkspaces()) {
       <div class="nf-workspace-summary">
         <div>
@@ -36,14 +32,14 @@
     }
   </jhi-section-panel>
 
-  <jhi-section-panel title="Project service" description="Project activity will be connected through a dedicated microservice.">
+  <jhi-section-panel title="Projects" description="Project activity will appear here as your workspace grows.">
     <jhi-state-panel
-      title="Projects will appear after the Project Service is connected"
-      description="No placeholder tasks, charts, or generated numbers are shown before the backend exists."
+      title="No projects connected yet"
+      description="Tasks, priorities, and activity will appear here when project work is available."
     />
   </jhi-section-panel>
 
-  <jhi-section-panel title="Account" description="Current authenticated gateway user.">
+  <jhi-section-panel title="Account" description="Your signed-in NexaFlow profile.">
     <div class="nf-account-panel">
       <span class="nf-account-panel__avatar">{{ account()?.login?.charAt(0)?.toUpperCase() || 'N' }}</span>
       <div>

@@ -1,12 +1,8 @@
-<jhi-page-header
-  eyebrow="Profile"
-  title="Account profile"
-  description="Your authenticated gateway identity. Account editing continues to use the existing JHipster account screens."
-/>
+<jhi-page-header eyebrow="Profile" title="Account profile" description="Review your account details and manage your profile settings." />
 
 @if (account(); as accountRef) {
   <div class="nf-profile-grid">
-    <jhi-section-panel title="Identity" description="Current account returned by GET /api/account.">
+    <jhi-section-panel title="Identity" description="Your current NexaFlow account information.">
       <div class="nf-profile-card">
         <span class="nf-profile-card__avatar">{{ initial() }}</span>
         <div class="nf-profile-card__copy">
@@ -35,7 +31,7 @@
       </dl>
     </jhi-section-panel>
 
-    <jhi-section-panel title="Account actions" description="Use the existing JHipster flows for account maintenance.">
+    <jhi-section-panel title="Account actions" description="Update your personal settings and password.">
       <div class="nf-action-list">
         <a class="nf-action-link" routerLink="/account/settings">
           <fa-icon icon="wrench" />
@@ -50,6 +46,6 @@
   </div>
 } @else {
   <jhi-section-panel>
-    <jhi-state-panel tone="loading" title="Loading profile" description="Fetching your current account from the gateway." />
+    <jhi-state-panel tone="loading" title="Loading profile" description="Fetching your account details." />
   </jhi-section-panel>
 }

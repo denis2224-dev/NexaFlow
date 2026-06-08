@@ -35,7 +35,7 @@ export default class Dashboard implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Workspace data could not be loaded. Confirm user-service is running and registered with Consul.');
+        this.errorMessage.set('Workspace data could not be loaded. Please try again in a moment.');
         this.isLoading.set(false);
       },
     });

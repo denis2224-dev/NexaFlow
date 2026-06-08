@@ -1,7 +1,7 @@
 <jhi-page-header
   eyebrow="Organizations"
   title="Workspaces"
-  description="Create workspaces, manage members, and handle invitations through user-service."
+  description="Create workspaces, manage members, and handle invitations from one place."
 >
   <div class="nf-header-actions">
     <button class="nf-button nf-button--secondary" type="button" (click)="openAcceptDialog()">
@@ -23,9 +23,9 @@
   <div class="nf-toast nf-toast--error">{{ errorMessage() }}</div>
 }
 
-<jhi-section-panel title="Your organizations" description="Workspaces returned for your authenticated account.">
+<jhi-section-panel title="Your organizations" description="Workspaces connected to your account.">
   @if (isLoading()) {
-    <jhi-state-panel tone="loading" title="Loading organizations" description="Fetching your workspace memberships from user-service." />
+    <jhi-state-panel tone="loading" title="Loading organizations" description="Fetching your workspaces." />
   } @else if (workspaces().length === 0 && !errorMessage()) {
     <jhi-state-panel title="No organizations yet" description="Create a workspace or accept an invitation to join an existing one.">
       <div class="nf-empty-actions">
@@ -222,14 +222,11 @@
 
       <div class="nf-dialog__body">
         @if (isMembersLoading()) {
-          <jhi-state-panel tone="loading" title="Loading members" description="Fetching workspace members from user-service." />
+          <jhi-state-panel tone="loading" title="Loading members" description="Fetching workspace members." />
         } @else if (membersError()) {
           <jhi-state-panel tone="error" title="Members unavailable" [description]="membersError() || ''" />
         } @else if (members().length === 0) {
-          <jhi-state-panel
-            title="No members returned"
-            description="Members will appear here after user-service returns them for this workspace."
-          />
+          <jhi-state-panel title="No members yet" description="Members will appear here after they join this workspace." />
         } @else {
           <div class="nf-table-wrap">
             <table class="nf-table nf-table--compact">
@@ -300,7 +297,7 @@
         }
 
         @if (isInvitationsLoading()) {
-          <jhi-state-panel tone="loading" title="Loading invitations" description="Fetching pending invitations from user-service." />
+          <jhi-state-panel tone="loading" title="Loading invitations" description="Fetching pending invitations." />
         } @else if (invitationsError()) {
           <jhi-state-panel tone="error" title="Invitations unavailable" [description]="invitationsError() || ''" />
         } @else if (invitations().length === 0) {
