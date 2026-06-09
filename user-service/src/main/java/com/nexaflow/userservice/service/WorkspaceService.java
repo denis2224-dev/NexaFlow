@@ -12,6 +12,7 @@ import com.nexaflow.userservice.security.SecurityUtils;
 import com.nexaflow.userservice.service.dto.AcceptInvitationRequest;
 import com.nexaflow.userservice.service.dto.ChangeMemberRoleRequest;
 import com.nexaflow.userservice.service.dto.CreateWorkspaceRequest;
+import com.nexaflow.userservice.service.dto.CurrentMembershipDTO;
 import com.nexaflow.userservice.service.dto.InvitationResponseDTO;
 import com.nexaflow.userservice.service.dto.InviteUserRequest;
 import com.nexaflow.userservice.service.dto.MemberDTO;
@@ -21,6 +22,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -463,4 +465,16 @@ public class WorkspaceService {
     }
 
     private record CurrentUser(Long id, String login, String email) {}
+
+    @Transactional(readOnly = true)
+    public CurrentMembershipDTO getCurrentMembership(Long organizationId) {
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin()
+            .orElseThrow(() -> new AccessDeniedException("User is not authenticated"));
+
+        Membership membership = membershipRepository
+            .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
+            .orElseThrow(() -> new AccessDeniedException("You are not a member of this workspace"));
+
+        return new CurrentMembershipDTO(organizationId, membership.getRole());
+    }
 }

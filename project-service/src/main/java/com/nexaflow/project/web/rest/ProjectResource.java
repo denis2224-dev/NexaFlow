@@ -142,9 +142,12 @@ public class ProjectResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of Projects in body.
      */
     @GetMapping("")
-    public ResponseEntity<List<ProjectDTO>> getAllProjects(@org.springdoc.core.annotations.ParameterObject Pageable pageable) {
-        LOG.debug("REST request to get a page of Projects");
-        Page<ProjectDTO> page = projectService.findAll(pageable);
+    public ResponseEntity<List<ProjectDTO>> getAllProjects(
+        @RequestParam Long organizationId,
+        @org.springdoc.core.annotations.ParameterObject Pageable pageable
+    ) {
+        LOG.debug("REST request to get a page of Projects for organization : {}", organizationId);
+        Page<ProjectDTO> page = projectService.findAllByOrganization(organizationId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }

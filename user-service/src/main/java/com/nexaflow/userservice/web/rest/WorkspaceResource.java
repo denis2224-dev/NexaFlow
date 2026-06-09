@@ -4,6 +4,7 @@ import com.nexaflow.userservice.service.WorkspaceService;
 import com.nexaflow.userservice.service.dto.AcceptInvitationRequest;
 import com.nexaflow.userservice.service.dto.ChangeMemberRoleRequest;
 import com.nexaflow.userservice.service.dto.CreateWorkspaceRequest;
+import com.nexaflow.userservice.service.dto.CurrentMembershipDTO;
 import com.nexaflow.userservice.service.dto.InvitationResponseDTO;
 import com.nexaflow.userservice.service.dto.InviteUserRequest;
 import com.nexaflow.userservice.service.dto.MemberDTO;
@@ -99,5 +100,10 @@ public class WorkspaceResource {
     public ResponseEntity<Void> removeMember(@PathVariable Long organizationId, @PathVariable Long membershipId) {
         workspaceService.removeMember(organizationId, membershipId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{organizationId}/membership/me")
+    public ResponseEntity<CurrentMembershipDTO> getCurrentMembership(@PathVariable Long organizationId) {
+        return ResponseEntity.ok(workspaceService.getCurrentMembership(organizationId));
     }
 }

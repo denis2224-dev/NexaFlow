@@ -12,6 +12,7 @@ import com.nexaflow.project.IntegrationTest;
 import com.nexaflow.project.domain.Project;
 import com.nexaflow.project.domain.enumeration.ProjectStatus;
 import com.nexaflow.project.repository.ProjectRepository;
+import com.nexaflow.project.security.OrganizationAccessService;
 import com.nexaflow.project.service.dto.ProjectDTO;
 import com.nexaflow.project.service.mapper.ProjectMapper;
 import jakarta.persistence.EntityManager;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,6 +74,9 @@ class ProjectResourceIT {
 
     @Autowired
     private ProjectMapper projectMapper;
+
+    @MockitoBean
+    private OrganizationAccessService organizationAccessService;
 
     @Autowired
     private EntityManager em;
@@ -265,7 +270,7 @@ class ProjectResourceIT {
 
         // Get all the projectList
         restProjectMockMvc
-            .perform(get(ENTITY_API_URL + "?sort=id,desc"))
+            .perform(get(ENTITY_API_URL + "?organizationId={organizationId}&sort=id,desc", DEFAULT_ORGANIZATION_ID))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(project.getId().intValue())))
@@ -333,6 +338,8 @@ class ProjectResourceIT {
                 put(ENTITY_API_URL_ID, projectDTO.getId()).contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsBytes(projectDTO))
             )
             .andExpect(status().isOk());
+
+        updatedProject.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the Project in the database
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -421,6 +428,8 @@ class ProjectResourceIT {
             )
             .andExpect(status().isOk());
 
+        partialUpdatedProject.organizationId(DEFAULT_ORGANIZATION_ID);
+
         // Validate the Project in the database
 
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -455,6 +464,8 @@ class ProjectResourceIT {
                     .content(om.writeValueAsBytes(partialUpdatedProject))
             )
             .andExpect(status().isOk());
+
+        partialUpdatedProject.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the Project in the database
 
