@@ -1,0 +1,83 @@
+enum ProjectStatus {
+  ACTIVE,
+  COMPLETED,
+  ARCHIVED
+}
+
+enum TaskStatus {
+  TODO,
+  IN_PROGRESS,
+  DONE,
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW,
+  MEDIUM,
+  HIGH,
+  URGENT
+}
+
+enum ActivityEntityType {
+  PROJECT,
+  TASK,
+  COMMENT
+}
+
+enum ActivityAction {
+  PROJECT_CREATED,
+  PROJECT_UPDATED,
+  PROJECT_ARCHIVED,
+  TASK_CREATED,
+  TASK_UPDATED,
+  TASK_ASSIGNED,
+  TASK_STATUS_CHANGED,
+  COMMENT_ADDED
+}
+
+entity Project {
+  organizationId Long required
+  name String required minlength(2) maxlength(100)
+  description TextBlob
+  status ProjectStatus required
+  createdBy String required
+  createdAt Instant required
+  updatedAt Instant
+}
+
+entity Task {
+  organizationId Long required
+  title String required minlength(2) maxlength(150)
+  description TextBlob
+  status TaskStatus required
+  priority TaskPriority required
+  dueDate LocalDate
+  assignedUserLogin String
+  createdBy String required
+  createdAt Instant required
+  updatedAt Instant
+}
+
+entity Comment {
+  organizationId Long required
+  content TextBlob required
+  authorLogin String required
+  createdAt Instant required
+}
+
+entity ActivityLog {
+  organizationId Long required
+  entityType ActivityEntityType required
+  entityId Long required
+  action ActivityAction required
+  performedBy String required
+  createdAt Instant required
+}
+
+relationship OneToMany {
+  Project{tasks} to Task{project required}
+  Task{comments} to Comment{task required}
+}
+
+paginate Project, Task, Comment, ActivityLog with pagination
+dto Project, Task, Comment, ActivityLog with mapstruct

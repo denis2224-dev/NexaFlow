@@ -1,0 +1,49 @@
+{
+  "annotations": {
+    "changelogDate": "20260609165826"
+  },
+  "applications": ["*"],
+  "clientRootFolder": "project-service",
+  "databaseType": "sql",
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "organizationId",
+      "fieldType": "Long",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "entityType",
+      "fieldType": "ActivityEntityType",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "PROJECT,TASK,COMMENT"
+    },
+    {
+      "fieldName": "entityId",
+      "fieldType": "Long",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "action",
+      "fieldType": "ActivityAction",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "PROJECT_CREATED,PROJECT_UPDATED,PROJECT_ARCHIVED,TASK_CREATED,TASK_UPDATED,TASK_ASSIGNED,TASK_STATUS_CHANGED,COMMENT_ADDED"
+    },
+    {
+      "fieldName": "performedBy",
+      "fieldType": "String",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "createdAt",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    }
+  ],
+  "microserviceName": "project-service",
+  "name": "ActivityLog",
+  "pagination": "pagination",
+  "relationships": [],
+  "searchEngine": "no",
+  "service": "serviceClass"
+}
