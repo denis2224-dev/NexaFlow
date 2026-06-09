@@ -1,8 +1,16 @@
-<jhi-page-header eyebrow="Profile" title="Account profile" description="Review your account details and manage your profile settings." />
+<jhi-page-header eyebrow="Profile" title="Personal settings" description="Manage your NexaFlow profile and sign-in details." />
 
 @if (account(); as accountRef) {
+  @if (invitationsSuccess()) {
+    <div class="nf-toast nf-toast--success">{{ invitationsSuccess() }}</div>
+  }
+
+  @if (invitationsError()) {
+    <div class="nf-toast nf-toast--error">{{ invitationsError() }}</div>
+  }
+
   <div class="nf-profile-grid">
-    <jhi-section-panel title="Identity" description="Your current NexaFlow account information.">
+    <jhi-section-panel title="Personal details" description="Information used to identify you across NexaFlow.">
       <div class="nf-profile-card">
         <span class="nf-profile-card__avatar">{{ initial() }}</span>
         <div class="nf-profile-card__copy">
@@ -13,29 +21,29 @@
 
       <dl class="nf-definition-list">
         <div>
-          <dt>Login</dt>
+          <dt>Username</dt>
           <dd>{{ accountRef.login }}</dd>
         </div>
         <div>
-          <dt>Email</dt>
+          <dt>Email address</dt>
           <dd>{{ accountRef.email }}</dd>
         </div>
         <div>
-          <dt>Language</dt>
+          <dt>Preferred language</dt>
           <dd>{{ accountRef.langKey }}</dd>
         </div>
         <div>
-          <dt>Status</dt>
-          <dd>{{ accountRef.activated ? 'Activated' : 'Pending activation' }}</dd>
+          <dt>Profile status</dt>
+          <dd>{{ accountRef.activated ? 'Active' : 'Activation pending' }}</dd>
         </div>
       </dl>
     </jhi-section-panel>
 
-    <jhi-section-panel title="Account actions" description="Update your personal settings and password.">
+    <jhi-section-panel title="Security" description="Keep your profile details and password up to date.">
       <div class="nf-action-list">
         <a class="nf-action-link" routerLink="/account/settings">
           <fa-icon icon="wrench" />
-          <span>Edit account settings</span>
+          <span>Edit profile details</span>
         </a>
         <a class="nf-action-link" routerLink="/account/password">
           <fa-icon icon="lock" />
@@ -43,9 +51,63 @@
         </a>
       </div>
     </jhi-section-panel>
+
+    <jhi-section-panel
+      class="nf-profile-grid__wide"
+      title="Received invitations"
+      description="Workspace invitations sent to your email address."
+    >
+      @if (invitationsLoading()) {
+        <jhi-state-panel tone="loading" title="Loading invitations" description="Checking for pending workspace invitations." />
+      } @else if (invitations().length === 0) {
+        <jhi-state-panel
+          title="No pending invitations"
+          description="New workspace invitations will appear here when someone invites you."
+        />
+      } @else {
+        <div class="nf-invitation-list">
+          @for (invitation of invitations(); track trackInvitation($index, invitation)) {
+            <article class="nf-invitation-item">
+              <div class="nf-invitation-item__copy">
+                <strong>{{ getInvitationWorkspaceName(invitation) }}</strong>
+                <span>
+                  {{ invitation.role || 'Member' }} access
+                  @if (invitation.invitedByLogin) {
+                    &middot; invited by {{ invitation.invitedByLogin }}
+                  }
+                </span>
+                <small>Expires {{ formatDate(invitation.expiresAt) }}</small>
+              </div>
+              <div class="nf-invitation-item__actions">
+                <button
+                  class="nf-button"
+                  type="button"
+                  [disabled]="
+                    acceptingInvitationId() === getInvitationId(invitation) || rejectingInvitationId() === getInvitationId(invitation)
+                  "
+                  (click)="acceptInvitation(invitation)"
+                >
+                  {{ acceptingInvitationId() === getInvitationId(invitation) ? 'Accepting...' : 'Accept' }}
+                </button>
+                <button
+                  class="nf-button nf-button--secondary"
+                  type="button"
+                  [disabled]="
+                    acceptingInvitationId() === getInvitationId(invitation) || rejectingInvitationId() === getInvitationId(invitation)
+                  "
+                  (click)="rejectInvitation(invitation)"
+                >
+                  {{ rejectingInvitationId() === getInvitationId(invitation) ? 'Declining...' : 'Decline' }}
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </jhi-section-panel>
   </div>
 } @else {
   <jhi-section-panel>
-    <jhi-state-panel tone="loading" title="Loading profile" description="Fetching your account details." />
+    <jhi-state-panel tone="loading" title="Loading your profile" description="Preparing your details." />
   </jhi-section-panel>
 }

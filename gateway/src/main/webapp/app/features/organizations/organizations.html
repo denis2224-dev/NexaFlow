@@ -44,7 +44,7 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Slug</th>
+            <th>Short name</th>
             <th>Role</th>
             <th>Status</th>
             <th class="nf-table__actions">Actions</th>
@@ -101,7 +101,7 @@
       <header class="nf-dialog__header">
         <div>
           <h2 id="create-workspace-title">Create workspace</h2>
-          <p>Create an organization and owner membership for your current account.</p>
+          <p>Set up a dedicated workspace and make yourself its owner.</p>
         </div>
         <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeCreateDialog()">
           <fa-icon icon="times" />
@@ -114,8 +114,8 @@
           <input type="text" formControlName="name" placeholder="Workspace name" autocomplete="organization" />
         </label>
         <label>
-          <span>Slug</span>
-          <input type="text" formControlName="slug" placeholder="workspace-slug" autocomplete="off" />
+          <span>Short name</span>
+          <input type="text" formControlName="slug" placeholder="team-workspace" autocomplete="off" />
         </label>
         <label>
           <span>Description</span>
@@ -138,7 +138,7 @@
       <header class="nf-dialog__header">
         <div>
           <h2 id="accept-invitation-title">Accept invitation</h2>
-          <p>Paste the invitation token provided by the workspace owner.</p>
+          <p>Paste the invitation code you received.</p>
         </div>
         <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeAcceptDialog()">
           <fa-icon icon="times" />
@@ -147,8 +147,8 @@
 
       <form class="nf-form" [formGroup]="acceptForm" (ngSubmit)="acceptInvitation()">
         <label>
-          <span>Invitation token</span>
-          <input type="text" formControlName="token" placeholder="Paste token" autocomplete="off" />
+          <span>Invitation code</span>
+          <input type="text" formControlName="token" placeholder="Paste code" autocomplete="off" />
         </label>
         <footer class="nf-dialog__footer">
           <button class="nf-button nf-button--secondary" type="button" (click)="closeAcceptDialog()">Cancel</button>
@@ -190,7 +190,7 @@
         <footer class="nf-dialog__footer">
           <button class="nf-button nf-button--secondary" type="button" (click)="closeInviteDialog()">Cancel</button>
           <button class="nf-button" type="submit" [disabled]="inviteForm.invalid || isInviting()">
-            {{ isInviting() ? 'Sending...' : 'Create invitation' }}
+            {{ isInviting() ? 'Sending...' : 'Send invitation' }}
           </button>
         </footer>
       </form>

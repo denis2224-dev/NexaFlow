@@ -21,8 +21,16 @@ export class InvitationService {
     return this.http.get<Invitation[]>(`${this.workspaceResourceUrl}/${organizationId}/invitations`);
   }
 
+  getMyPending(): Observable<Invitation[]> {
+    return this.http.get<Invitation[]>(`${this.workspaceResourceUrl}/invitations/my`);
+  }
+
   accept(request: InvitationAcceptRequest): Observable<Workspace> {
     return this.http.post<Workspace>(`${this.workspaceResourceUrl}/invitations/accept`, request);
+  }
+
+  reject(invitationId: number): Observable<unknown> {
+    return this.http.post<unknown>(`${this.workspaceResourceUrl}/invitations/${invitationId}/reject`, {});
   }
 
   revokeFromWorkspace(organizationId: number, invitationId: number): Observable<unknown> {

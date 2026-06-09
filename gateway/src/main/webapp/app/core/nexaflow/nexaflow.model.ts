@@ -1,6 +1,6 @@
 export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
-export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED' | 'REJECTED';
 
 export interface Workspace {
   id?: number;
@@ -37,6 +37,8 @@ export interface Invitation {
   id?: number;
   invitationId?: number;
   organizationId?: number;
+  organizationName?: string;
+  organizationSlug?: string;
   email?: string;
   userEmail?: string;
   userLogin?: string;

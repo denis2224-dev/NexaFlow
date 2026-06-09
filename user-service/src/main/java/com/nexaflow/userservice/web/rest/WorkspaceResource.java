@@ -58,6 +58,17 @@ public class WorkspaceResource {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/invitations/my")
+    public ResponseEntity<List<InvitationResponseDTO>> getMyPendingInvitations() {
+        return ResponseEntity.ok(workspaceService.findMyPendingInvitations());
+    }
+
+    @PostMapping("/invitations/{invitationId}/reject")
+    public ResponseEntity<Void> rejectInvitation(@PathVariable Long invitationId) {
+        workspaceService.rejectInvitation(invitationId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{organizationId}/members")
     public ResponseEntity<List<MemberDTO>> getWorkspaceMembers(@PathVariable Long organizationId) {
         return ResponseEntity.ok(workspaceService.getWorkspaceMembers(organizationId));

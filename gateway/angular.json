@@ -94,7 +94,7 @@
           "builder": "@angular-builders/custom-esbuild:dev-server",
           "options": {
             "buildTarget": "nexa-flow:build:development",
-            "open": true,
+            "open": false,
             "proxyConfig": "proxy.config.mjs",
             "port": 4200
           },

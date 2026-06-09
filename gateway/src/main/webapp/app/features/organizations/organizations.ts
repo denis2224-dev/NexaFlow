@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -7,6 +6,7 @@ import { finalize } from 'rxjs';
 
 import { InvitationService } from 'app/core/nexaflow/invitation.service';
 import { MembershipService } from 'app/core/nexaflow/membership.service';
+import { extractNexaFlowErrorMessage } from 'app/core/nexaflow/nexaflow-error.util';
 import { Invitation, Membership, Workspace, WorkspaceRole } from 'app/core/nexaflow/nexaflow.model';
 import { WorkspaceService } from 'app/core/nexaflow/workspace.service';
 import PageHeader from 'app/shared/ui/page-header/page-header';
@@ -390,30 +390,6 @@ export default class Organizations implements OnInit {
   }
 
   private extractErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof HttpErrorResponse) {
-      const payload = error.error as { detail?: string; message?: string; title?: string } | string | null;
-
-      if (typeof payload === 'string') {
-        return payload.trim() || fallback;
-      }
-
-      if (payload?.detail) {
-        return payload.detail;
-      }
-
-      if (payload?.message) {
-        return payload.message;
-      }
-
-      if (payload?.title) {
-        return payload.title;
-      }
-
-      if (error.status) {
-        return `${fallback} (${error.status})`;
-      }
-    }
-
-    return fallback;
+    return extractNexaFlowErrorMessage(error, fallback);
   }
 }

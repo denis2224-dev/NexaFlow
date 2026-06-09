@@ -98,9 +98,9 @@ public class WorkspaceService {
 
     @Transactional(readOnly = true)
     public WorkspaceDTO getWorkspace(Long organizationId) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
 
         Membership currentMembership = membershipRepository
             .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
@@ -242,10 +242,40 @@ public class WorkspaceService {
     }
 
     @Transactional(readOnly = true)
+    public List<InvitationResponseDTO> findMyPendingInvitations() {
+        CurrentUser currentUser = getCurrentUser();
+
+        return invitationRepository
+            .findByEmailAndStatus(currentUser.email(), InvitationStatus.PENDING)
+            .stream()
+            .filter(invitation -> invitation.getExpiresAt().isAfter(Instant.now()))
+            .map(this::toInvitationResponseDTO)
+            .toList();
+    }
+
+    public void rejectInvitation(Long invitationId) {
+        CurrentUser currentUser = getCurrentUser();
+
+        Invitation invitation = invitationRepository
+            .findOneByIdAndEmailAndStatus(invitationId, currentUser.email(), InvitationStatus.PENDING)
+            .orElseThrow(() -> new BadRequestAlertException("Pending invitation not found", ENTITY_NAME, "invitationnotfound"));
+
+        if (invitation.getExpiresAt().isBefore(Instant.now())) {
+            invitation.setStatus(InvitationStatus.EXPIRED);
+            invitationRepository.save(invitation);
+
+            throw new BadRequestAlertException("Invitation has expired", ENTITY_NAME, "invitationexpired");
+        }
+
+        invitation.setStatus(InvitationStatus.REJECTED);
+        invitationRepository.save(invitation);
+    }
+
+    @Transactional(readOnly = true)
     public List<MemberDTO> getWorkspaceMembers(Long organizationId) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
 
         membershipRepository
             .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
@@ -269,9 +299,9 @@ public class WorkspaceService {
 
     @Transactional(readOnly = true)
     public List<InvitationResponseDTO> getWorkspaceInvitations(Long organizationId) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
 
         Membership currentMembership = membershipRepository
             .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
@@ -284,24 +314,14 @@ public class WorkspaceService {
         return invitationRepository
             .findByOrganizationIdAndStatus(organizationId, InvitationStatus.PENDING)
             .stream()
-            .map(invitation ->
-                new InvitationResponseDTO(
-                    invitation.getId(),
-                    invitation.getOrganization().getId(),
-                    invitation.getEmail(),
-                    invitation.getToken(),
-                    invitation.getRole(),
-                    invitation.getStatus(),
-                    invitation.getExpiresAt()
-                )
-            )
+            .map(this::toInvitationResponseDTO)
             .toList();
     }
 
     public void revokeInvitation(Long organizationId, Long invitationId) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
 
         Membership currentMembership = membershipRepository
             .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
@@ -320,9 +340,9 @@ public class WorkspaceService {
     }
 
     public MemberDTO changeMemberRole(Long organizationId, Long membershipId, ChangeMemberRoleRequest request) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
 
         Membership currentMembership = membershipRepository
             .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
@@ -363,9 +383,9 @@ public class WorkspaceService {
     }
 
     public void removeMember(Long organizationId, Long membershipId) {
-        String currentUserLogin = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
 
         Membership currentMembership = membershipRepository
             .findOneByOrganizationIdAndUserLoginAndActiveTrue(organizationId, currentUserLogin)
@@ -406,17 +426,34 @@ public class WorkspaceService {
         );
     }
 
+    private InvitationResponseDTO toInvitationResponseDTO(Invitation invitation) {
+        Organization organization = invitation.getOrganization();
+        return new InvitationResponseDTO(
+            invitation.getId(),
+            organization.getId(),
+            organization.getName(),
+            organization.getSlug(),
+            invitation.getEmail(),
+            invitation.getToken(),
+            invitation.getRole(),
+            invitation.getStatus(),
+            invitation.getExpiresAt(),
+            invitation.getInvitedByLogin()
+        );
+    }
+
     private CurrentUser getCurrentUser() {
-        String login = SecurityUtils
-            .getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated"));
-        Long id = SecurityUtils
-            .getCurrentUserId()
-            .orElseThrow(() -> new BadRequestAlertException("Current user id is missing from the token", ENTITY_NAME, "useridmissing"));
-        String email = SecurityUtils
-            .getCurrentUserEmail()
+        String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+            new BadRequestAlertException("Current user is not authenticated", ENTITY_NAME, "usernotauthenticated")
+        );
+        Long id = SecurityUtils.getCurrentUserId().orElseThrow(() ->
+            new BadRequestAlertException("Current user id is missing from the token", ENTITY_NAME, "useridmissing")
+        );
+        String email = SecurityUtils.getCurrentUserEmail()
             .map(WorkspaceService::normalizeEmail)
-            .orElseThrow(() -> new BadRequestAlertException("Current user email is missing from the token", ENTITY_NAME, "useremailmissing"));
+            .orElseThrow(() ->
+                new BadRequestAlertException("Current user email is missing from the token", ENTITY_NAME, "useremailmissing")
+            );
 
         return new CurrentUser(id, login, email);
     }
