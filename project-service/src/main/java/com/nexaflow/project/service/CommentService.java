@@ -4,6 +4,7 @@ import com.nexaflow.project.domain.Comment;
 import com.nexaflow.project.domain.Task;
 import com.nexaflow.project.domain.enumeration.ActivityAction;
 import com.nexaflow.project.domain.enumeration.ActivityEntityType;
+import com.nexaflow.project.domain.enumeration.ProjectStatus;
 import com.nexaflow.project.repository.CommentRepository;
 import com.nexaflow.project.repository.TaskRepository;
 import com.nexaflow.project.security.OrganizationAccessService;
@@ -12,6 +13,7 @@ import com.nexaflow.project.service.dto.CommentDTO;
 import com.nexaflow.project.service.dto.CreateCommentRequest;
 import com.nexaflow.project.service.dto.UpdateCommentRequest;
 import com.nexaflow.project.service.mapper.CommentMapper;
+import com.nexaflow.project.web.rest.errors.BadRequestAlertException;
 import java.time.Instant;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommentService.class);
+    private static final String ENTITY_NAME = "comment";
 
     private final CommentRepository commentRepository;
     private final TaskRepository taskRepository;
@@ -55,6 +58,7 @@ public class CommentService {
         LOG.debug("Request to add Comment to Task {} : {}", taskId, request);
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new AccessDeniedException("Task not found"));
         organizationAccessService.assertMember(task.getOrganizationId());
+        assertTaskProjectNotArchived(task);
 
         Comment comment = new Comment();
         comment.setOrganizationId(task.getOrganizationId());
@@ -72,6 +76,8 @@ public class CommentService {
         LOG.debug("Request to update Comment : {}, {}", id, request);
         Comment comment = getExistingComment(id);
         organizationAccessService.assertMember(comment.getOrganizationId());
+        assertCommentAuthor(comment);
+        assertTaskProjectNotArchived(comment.getTask());
         comment.setContent(request.content());
         comment = commentRepository.save(comment);
         activityLogService.record(comment.getOrganizationId(), ActivityEntityType.COMMENT, comment.getId(), ActivityAction.COMMENT_UPDATED);
@@ -93,6 +99,8 @@ public class CommentService {
         Comment existingComment = getExistingComment(commentDTO.getId());
         Long organizationId = existingComment.getOrganizationId();
         organizationAccessService.assertMember(organizationId);
+        assertCommentAuthor(existingComment);
+        assertTaskProjectNotArchived(existingComment.getTask());
         commentDTO.setOrganizationId(organizationId);
 
         Comment comment = commentMapper.toEntity(commentDTO);
@@ -108,6 +116,8 @@ public class CommentService {
             .map(existingComment -> {
                 Long organizationId = existingComment.getOrganizationId();
                 organizationAccessService.assertMember(organizationId);
+                assertCommentAuthor(existingComment);
+                assertTaskProjectNotArchived(existingComment.getTask());
 
                 commentDTO.setOrganizationId(organizationId);
                 commentMapper.partialUpdate(existingComment, commentDTO);
@@ -158,11 +168,28 @@ public class CommentService {
 
         Comment existingComment = getExistingComment(id);
         organizationAccessService.assertMember(existingComment.getOrganizationId());
+        assertCommentAuthor(existingComment);
+        assertTaskProjectNotArchived(existingComment.getTask());
 
         commentRepository.deleteById(id);
     }
 
     private Comment getExistingComment(Long id) {
         return commentRepository.findById(id).orElseThrow(() -> new AccessDeniedException("Comment not found"));
+    }
+
+    private void assertCommentAuthor(Comment comment) {
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin()
+            .orElseThrow(() -> new AccessDeniedException("User is not authenticated"));
+
+        if (!currentUserLogin.equals(comment.getAuthorLogin())) {
+            throw new AccessDeniedException("You can only modify your own comments");
+        }
+    }
+
+    private void assertTaskProjectNotArchived(Task task) {
+        if (task.getProject().getStatus() == ProjectStatus.ARCHIVED) {
+            throw new BadRequestAlertException("Archived projects cannot be modified", ENTITY_NAME, "projectarchived");
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.nexaflow.project.domain.Project;
 import com.nexaflow.project.domain.Task;
 import com.nexaflow.project.domain.enumeration.ActivityAction;
 import com.nexaflow.project.domain.enumeration.ActivityEntityType;
+import com.nexaflow.project.domain.enumeration.ProjectStatus;
 import com.nexaflow.project.domain.enumeration.TaskStatus;
 import com.nexaflow.project.repository.ProjectRepository;
 import com.nexaflow.project.repository.TaskRepository;
@@ -15,6 +16,7 @@ import com.nexaflow.project.service.dto.CreateTaskRequest;
 import com.nexaflow.project.service.dto.TaskDTO;
 import com.nexaflow.project.service.dto.UpdateTaskRequest;
 import com.nexaflow.project.service.mapper.TaskMapper;
+import com.nexaflow.project.web.rest.errors.BadRequestAlertException;
 import java.time.Instant;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TaskService {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
+    private static final String ENTITY_NAME = "task";
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
@@ -58,6 +61,7 @@ public class TaskService {
         LOG.debug("Request to create Task : {}", request);
         Project project = projectRepository.findById(request.projectId()).orElseThrow(() -> new AccessDeniedException("Project not found"));
         organizationAccessService.assertMember(project.getOrganizationId());
+        assertProjectNotArchived(project);
         organizationAccessService.assertUserIsMember(project.getOrganizationId(), request.assignedUserLogin());
 
         Task task = new Task();
@@ -91,6 +95,7 @@ public class TaskService {
         LOG.debug("Request to update Task : {}, {}", id, request);
         Task task = getExistingTask(id);
         organizationAccessService.assertMember(task.getOrganizationId());
+        assertTaskProjectNotArchived(task);
 
         task.setTitle(request.title());
         task.setDescription(request.description());
@@ -108,6 +113,7 @@ public class TaskService {
         Task existingTask = getExistingTask(taskDTO.getId());
         Long organizationId = existingTask.getOrganizationId();
         organizationAccessService.assertMember(organizationId);
+        assertTaskProjectNotArchived(existingTask);
 
         taskDTO.setOrganizationId(organizationId);
 
@@ -124,6 +130,7 @@ public class TaskService {
             .map(existingTask -> {
                 Long organizationId = existingTask.getOrganizationId();
                 organizationAccessService.assertMember(organizationId);
+                assertTaskProjectNotArchived(existingTask);
 
                 taskDTO.setOrganizationId(organizationId);
                 taskMapper.partialUpdate(existingTask, taskDTO);
@@ -138,6 +145,7 @@ public class TaskService {
     public TaskDTO changeStatus(Long id, ChangeTaskStatusRequest request) {
         Task task = getExistingTask(id);
         organizationAccessService.assertMember(task.getOrganizationId());
+        assertTaskProjectNotArchived(task);
         task.setStatus(request.status());
         task.setUpdatedAt(Instant.now());
         task = taskRepository.save(task);
@@ -148,6 +156,7 @@ public class TaskService {
     public TaskDTO assign(Long id, AssignTaskRequest request) {
         Task task = getExistingTask(id);
         organizationAccessService.assertMember(task.getOrganizationId());
+        assertTaskProjectNotArchived(task);
         organizationAccessService.assertUserIsMember(task.getOrganizationId(), request.assignedUserLogin());
         task.setAssignedUserLogin(request.assignedUserLogin());
         task.setUpdatedAt(Instant.now());
@@ -159,6 +168,7 @@ public class TaskService {
     public TaskDTO unassign(Long id) {
         Task task = getExistingTask(id);
         organizationAccessService.assertMember(task.getOrganizationId());
+        assertTaskProjectNotArchived(task);
         task.setAssignedUserLogin(null);
         task.setUpdatedAt(Instant.now());
         task = taskRepository.save(task);
@@ -226,6 +236,7 @@ public class TaskService {
 
         Task existingTask = getExistingTask(id);
         organizationAccessService.assertMember(existingTask.getOrganizationId());
+        assertTaskProjectNotArchived(existingTask);
 
         taskRepository.deleteById(id);
     }
@@ -233,5 +244,15 @@ public class TaskService {
     @Transactional(readOnly = true)
     public Task getExistingTask(Long id) {
         return taskRepository.findById(id).orElseThrow(() -> new AccessDeniedException("Task not found"));
+    }
+
+    private void assertTaskProjectNotArchived(Task task) {
+        assertProjectNotArchived(task.getProject());
+    }
+
+    private void assertProjectNotArchived(Project project) {
+        if (project.getStatus() == ProjectStatus.ARCHIVED) {
+            throw new BadRequestAlertException("Archived projects cannot be modified", ENTITY_NAME, "projectarchived");
+        }
     }
 }

@@ -11,6 +11,7 @@ import com.nexaflow.project.service.dto.CreateProjectRequest;
 import com.nexaflow.project.service.dto.ProjectDTO;
 import com.nexaflow.project.service.dto.UpdateProjectRequest;
 import com.nexaflow.project.service.mapper.ProjectMapper;
+import com.nexaflow.project.web.rest.errors.BadRequestAlertException;
 import java.time.Instant;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProjectService.class);
+    private static final String ENTITY_NAME = "project";
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
@@ -78,6 +80,7 @@ public class ProjectService {
         LOG.debug("Request to update Project : {}, {}", id, request);
         Project project = getExistingProject(id);
         organizationAccessService.assertMember(project.getOrganizationId());
+        assertProjectNotArchived(project);
 
         project.setName(request.name());
         project.setDescription(request.description());
@@ -95,6 +98,7 @@ public class ProjectService {
         Project existingProject = getExistingProject(projectDTO.getId());
         Long organizationId = existingProject.getOrganizationId();
         organizationAccessService.assertMember(organizationId);
+        assertProjectNotArchived(existingProject);
 
         projectDTO.setOrganizationId(organizationId);
 
@@ -111,6 +115,7 @@ public class ProjectService {
             .map(existingProject -> {
                 Long organizationId = existingProject.getOrganizationId();
                 organizationAccessService.assertMember(organizationId);
+                assertProjectNotArchived(existingProject);
 
                 projectDTO.setOrganizationId(organizationId);
                 projectMapper.partialUpdate(existingProject, projectDTO);
@@ -135,6 +140,7 @@ public class ProjectService {
     private Project changeStatus(Long id, ProjectStatus status, ActivityAction action) {
         Project project = getExistingProject(id);
         organizationAccessService.assertMember(project.getOrganizationId());
+        assertProjectNotArchived(project);
         project.setStatus(status);
         project.setUpdatedAt(Instant.now());
         project = projectRepository.save(project);
@@ -164,7 +170,7 @@ public class ProjectService {
         LOG.debug("Request to delete Project : {}", id);
 
         Project existingProject = getExistingProject(id);
-        organizationAccessService.assertMember(existingProject.getOrganizationId());
+        organizationAccessService.assertAdminOrOwner(existingProject.getOrganizationId());
 
         projectRepository.deleteById(id);
     }
@@ -181,5 +187,11 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public Project getExistingProject(Long id) {
         return projectRepository.findById(id).orElseThrow(() -> new AccessDeniedException("Project not found"));
+    }
+
+    private void assertProjectNotArchived(Project project) {
+        if (project.getStatus() == ProjectStatus.ARCHIVED) {
+            throw new BadRequestAlertException("Archived projects cannot be modified", ENTITY_NAME, "projectarchived");
+        }
     }
 }
