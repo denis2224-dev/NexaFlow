@@ -58,6 +58,7 @@ public class TaskService {
         LOG.debug("Request to create Task : {}", request);
         Project project = projectRepository.findById(request.projectId()).orElseThrow(() -> new AccessDeniedException("Project not found"));
         organizationAccessService.assertMember(project.getOrganizationId());
+        organizationAccessService.assertUserIsMember(project.getOrganizationId(), request.assignedUserLogin());
 
         Task task = new Task();
         task.setOrganizationId(project.getOrganizationId());
@@ -147,6 +148,7 @@ public class TaskService {
     public TaskDTO assign(Long id, AssignTaskRequest request) {
         Task task = getExistingTask(id);
         organizationAccessService.assertMember(task.getOrganizationId());
+        organizationAccessService.assertUserIsMember(task.getOrganizationId(), request.assignedUserLogin());
         task.setAssignedUserLogin(request.assignedUserLogin());
         task.setUpdatedAt(Instant.now());
         task = taskRepository.save(task);

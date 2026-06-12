@@ -477,4 +477,16 @@ public class WorkspaceService {
 
         return new CurrentMembershipDTO(organizationId, membership.getRole());
     }
+
+    @Transactional(readOnly = true)
+    public boolean isActiveMember(Long organizationId, String userLogin) {
+        if (userLogin == null || userLogin.isBlank()) {
+            return false;
+        }
+
+        // First validate the caller is allowed to ask about this organization.
+        getCurrentMembership(organizationId);
+
+        return membershipRepository.existsByOrganizationIdAndUserLoginAndActiveTrue(organizationId, userLogin);
+    }
 }
