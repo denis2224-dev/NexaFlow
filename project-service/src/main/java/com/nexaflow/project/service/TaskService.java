@@ -1,10 +1,21 @@
 package com.nexaflow.project.service;
 
+import com.nexaflow.project.domain.Project;
 import com.nexaflow.project.domain.Task;
+import com.nexaflow.project.domain.enumeration.ActivityAction;
+import com.nexaflow.project.domain.enumeration.ActivityEntityType;
+import com.nexaflow.project.domain.enumeration.TaskStatus;
+import com.nexaflow.project.repository.ProjectRepository;
 import com.nexaflow.project.repository.TaskRepository;
 import com.nexaflow.project.security.OrganizationAccessService;
+import com.nexaflow.project.security.SecurityUtils;
+import com.nexaflow.project.service.dto.AssignTaskRequest;
+import com.nexaflow.project.service.dto.ChangeTaskStatusRequest;
+import com.nexaflow.project.service.dto.CreateTaskRequest;
 import com.nexaflow.project.service.dto.TaskDTO;
+import com.nexaflow.project.service.dto.UpdateTaskRequest;
 import com.nexaflow.project.service.mapper.TaskMapper;
+import java.time.Instant;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,23 +35,47 @@ public class TaskService {
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
 
     private final TaskRepository taskRepository;
-
+    private final ProjectRepository projectRepository;
     private final TaskMapper taskMapper;
-
     private final OrganizationAccessService organizationAccessService;
+    private final ActivityLogService activityLogService;
 
-    public TaskService(TaskRepository taskRepository, TaskMapper taskMapper, OrganizationAccessService organizationAccessService) {
+    public TaskService(
+        TaskRepository taskRepository,
+        ProjectRepository projectRepository,
+        TaskMapper taskMapper,
+        OrganizationAccessService organizationAccessService,
+        ActivityLogService activityLogService
+    ) {
         this.taskRepository = taskRepository;
+        this.projectRepository = projectRepository;
         this.taskMapper = taskMapper;
         this.organizationAccessService = organizationAccessService;
+        this.activityLogService = activityLogService;
     }
 
-    /**
-     * Save a task.
-     *
-     * @param taskDTO the entity to save.
-     * @return the persisted entity.
-     */
+    public TaskDTO create(CreateTaskRequest request) {
+        LOG.debug("Request to create Task : {}", request);
+        Project project = projectRepository.findById(request.projectId()).orElseThrow(() -> new AccessDeniedException("Project not found"));
+        organizationAccessService.assertMember(project.getOrganizationId());
+
+        Task task = new Task();
+        task.setOrganizationId(project.getOrganizationId());
+        task.setProject(project);
+        task.setTitle(request.title());
+        task.setDescription(request.description());
+        task.setPriority(request.priority());
+        task.setStatus(request.status());
+        task.setAssignedUserLogin(request.assignedUserLogin());
+        task.setDueDate(request.dueDate());
+        task.setCreatedBy(SecurityUtils.getCurrentUserLogin().orElse("system"));
+        task.setCreatedAt(Instant.now());
+
+        task = taskRepository.save(task);
+        activityLogService.record(task.getOrganizationId(), ActivityEntityType.TASK, task.getId(), ActivityAction.TASK_CREATED);
+        return taskMapper.toDto(task);
+    }
+
     public TaskDTO save(TaskDTO taskDTO) {
         LOG.debug("Request to save Task : {}", taskDTO);
 
@@ -51,19 +86,25 @@ public class TaskService {
         return taskMapper.toDto(task);
     }
 
-    /**
-     * Update a task.
-     *
-     * @param taskDTO the entity to save.
-     * @return the persisted entity.
-     */
+    public TaskDTO update(Long id, UpdateTaskRequest request) {
+        LOG.debug("Request to update Task : {}, {}", id, request);
+        Task task = getExistingTask(id);
+        organizationAccessService.assertMember(task.getOrganizationId());
+
+        task.setTitle(request.title());
+        task.setDescription(request.description());
+        task.setPriority(request.priority());
+        task.setUpdatedAt(Instant.now());
+
+        task = taskRepository.save(task);
+        activityLogService.record(task.getOrganizationId(), ActivityEntityType.TASK, task.getId(), ActivityAction.TASK_UPDATED);
+        return taskMapper.toDto(task);
+    }
+
     public TaskDTO update(TaskDTO taskDTO) {
         LOG.debug("Request to update Task : {}", taskDTO);
 
-        Task existingTask = taskRepository
-            .findById(taskDTO.getId())
-            .orElseThrow(() -> new AccessDeniedException("Task not found"));
-
+        Task existingTask = getExistingTask(taskDTO.getId());
         Long organizationId = existingTask.getOrganizationId();
         organizationAccessService.assertMember(organizationId);
 
@@ -74,12 +115,6 @@ public class TaskService {
         return taskMapper.toDto(task);
     }
 
-    /**
-     * Partially update a task.
-     *
-     * @param taskDTO the entity to update partially.
-     * @return the persisted entity.
-     */
     public Optional<TaskDTO> partialUpdate(TaskDTO taskDTO) {
         LOG.debug("Request to partially update Task : {}", taskDTO);
 
@@ -99,6 +134,36 @@ public class TaskService {
             .map(taskMapper::toDto);
     }
 
+    public TaskDTO changeStatus(Long id, ChangeTaskStatusRequest request) {
+        Task task = getExistingTask(id);
+        organizationAccessService.assertMember(task.getOrganizationId());
+        task.setStatus(request.status());
+        task.setUpdatedAt(Instant.now());
+        task = taskRepository.save(task);
+        activityLogService.record(task.getOrganizationId(), ActivityEntityType.TASK, task.getId(), ActivityAction.TASK_STATUS_CHANGED);
+        return taskMapper.toDto(task);
+    }
+
+    public TaskDTO assign(Long id, AssignTaskRequest request) {
+        Task task = getExistingTask(id);
+        organizationAccessService.assertMember(task.getOrganizationId());
+        task.setAssignedUserLogin(request.assignedUserLogin());
+        task.setUpdatedAt(Instant.now());
+        task = taskRepository.save(task);
+        activityLogService.record(task.getOrganizationId(), ActivityEntityType.TASK, task.getId(), ActivityAction.TASK_ASSIGNED);
+        return taskMapper.toDto(task);
+    }
+
+    public TaskDTO unassign(Long id) {
+        Task task = getExistingTask(id);
+        organizationAccessService.assertMember(task.getOrganizationId());
+        task.setAssignedUserLogin(null);
+        task.setUpdatedAt(Instant.now());
+        task = taskRepository.save(task);
+        activityLogService.record(task.getOrganizationId(), ActivityEntityType.TASK, task.getId(), ActivityAction.TASK_UNASSIGNED);
+        return taskMapper.toDto(task);
+    }
+
     @Transactional(readOnly = true)
     public Page<TaskDTO> findAllByOrganization(Long organizationId, Pageable pageable) {
         LOG.debug("Request to get Tasks for organization : {}", organizationId);
@@ -108,24 +173,41 @@ public class TaskService {
         return taskRepository.findByOrganizationId(organizationId, pageable).map(taskMapper::toDto);
     }
 
-    /**
-     * Get all the tasks.
-     *
-     * @param pageable the pagination information.
-     * @return the list of entities.
-     */
+    @Transactional(readOnly = true)
+    public Page<TaskDTO> findByProject(Long projectId, Pageable pageable) {
+        LOG.debug("Request to get Tasks for project : {}", projectId);
+        Project project = projectRepository.findById(projectId).orElseThrow(() -> new AccessDeniedException("Project not found"));
+        organizationAccessService.assertMember(project.getOrganizationId());
+        return taskRepository.findByProjectId(projectId, pageable).map(taskMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskDTO> findMyTasks(Long organizationId, Pageable pageable) {
+        String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new AccessDeniedException("User is not authenticated"));
+        organizationAccessService.assertMember(organizationId);
+        return taskRepository.findByOrganizationIdAndAssignedUserLogin(organizationId, login, pageable).map(taskMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskDTO> findDueToday(Long organizationId, Pageable pageable) {
+        organizationAccessService.assertMember(organizationId);
+        return taskRepository.findByOrganizationIdAndDueDate(organizationId, java.time.LocalDate.now(), pageable).map(taskMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskDTO> findOverdue(Long organizationId, Pageable pageable) {
+        organizationAccessService.assertMember(organizationId);
+        return taskRepository
+            .findByOrganizationIdAndDueDateBeforeAndStatusNot(organizationId, java.time.LocalDate.now(), TaskStatus.DONE, pageable)
+            .map(taskMapper::toDto);
+    }
+
     @Transactional(readOnly = true)
     public Page<TaskDTO> findAll(Pageable pageable) {
         LOG.debug("Request to get all Tasks");
         return taskRepository.findAll(pageable).map(taskMapper::toDto);
     }
 
-    /**
-     * Get one task by id.
-     *
-     * @param id the id of the entity.
-     * @return the entity.
-     */
     @Transactional(readOnly = true)
     public Optional<TaskDTO> findOne(Long id) {
         LOG.debug("Request to get Task : {}", id);
@@ -137,20 +219,17 @@ public class TaskService {
             });
     }
 
-    /**
-     * Delete the task by id.
-     *
-     * @param id the id of the entity.
-     */
     public void delete(Long id) {
         LOG.debug("Request to delete Task : {}", id);
 
-        Task existingTask = taskRepository
-            .findById(id)
-            .orElseThrow(() -> new AccessDeniedException("Task not found"));
-
+        Task existingTask = getExistingTask(id);
         organizationAccessService.assertMember(existingTask.getOrganizationId());
 
         taskRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Task getExistingTask(Long id) {
+        return taskRepository.findById(id).orElseThrow(() -> new AccessDeniedException("Task not found"));
     }
 }

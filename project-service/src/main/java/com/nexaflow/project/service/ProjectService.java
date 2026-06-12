@@ -1,10 +1,17 @@
 package com.nexaflow.project.service;
 
 import com.nexaflow.project.domain.Project;
+import com.nexaflow.project.domain.enumeration.ActivityAction;
+import com.nexaflow.project.domain.enumeration.ActivityEntityType;
+import com.nexaflow.project.domain.enumeration.ProjectStatus;
 import com.nexaflow.project.repository.ProjectRepository;
 import com.nexaflow.project.security.OrganizationAccessService;
+import com.nexaflow.project.security.SecurityUtils;
+import com.nexaflow.project.service.dto.CreateProjectRequest;
 import com.nexaflow.project.service.dto.ProjectDTO;
+import com.nexaflow.project.service.dto.UpdateProjectRequest;
 import com.nexaflow.project.service.mapper.ProjectMapper;
+import java.time.Instant;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,19 +33,37 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
     private final OrganizationAccessService organizationAccessService;
+    private final ActivityLogService activityLogService;
 
-    public ProjectService(ProjectRepository projectRepository, ProjectMapper projectMapper, OrganizationAccessService organizationAccessService) {
+    public ProjectService(
+        ProjectRepository projectRepository,
+        ProjectMapper projectMapper,
+        OrganizationAccessService organizationAccessService,
+        ActivityLogService activityLogService
+    ) {
         this.projectRepository = projectRepository;
         this.projectMapper = projectMapper;
         this.organizationAccessService = organizationAccessService;
+        this.activityLogService = activityLogService;
     }
 
-    /**
-     * Save a project.
-     *
-     * @param projectDTO the entity to save.
-     * @return the persisted entity.
-     */
+    public ProjectDTO create(Long organizationId, CreateProjectRequest request) {
+        LOG.debug("Request to create Project in organization {} : {}", organizationId, request);
+        organizationAccessService.assertMember(organizationId);
+
+        Project project = new Project();
+        project.setOrganizationId(organizationId);
+        project.setName(request.name());
+        project.setDescription(request.description());
+        project.setStatus(request.status());
+        project.setCreatedBy(SecurityUtils.getCurrentUserLogin().orElse("system"));
+        project.setCreatedAt(Instant.now());
+
+        project = projectRepository.save(project);
+        activityLogService.record(organizationId, ActivityEntityType.PROJECT, project.getId(), ActivityAction.PROJECT_CREATED);
+        return projectMapper.toDto(project);
+    }
+
     public ProjectDTO save(ProjectDTO projectDTO) {
         LOG.debug("Request to save Project : {}", projectDTO);
 
@@ -49,19 +74,25 @@ public class ProjectService {
         return projectMapper.toDto(project);
     }
 
-    /**
-     * Update a project.
-     *
-     * @param projectDTO the entity to save.
-     * @return the persisted entity.
-     */
+    public ProjectDTO update(Long id, UpdateProjectRequest request) {
+        LOG.debug("Request to update Project : {}, {}", id, request);
+        Project project = getExistingProject(id);
+        organizationAccessService.assertMember(project.getOrganizationId());
+
+        project.setName(request.name());
+        project.setDescription(request.description());
+        project.setStatus(request.status());
+        project.setUpdatedAt(Instant.now());
+
+        project = projectRepository.save(project);
+        activityLogService.record(project.getOrganizationId(), ActivityEntityType.PROJECT, project.getId(), ActivityAction.PROJECT_UPDATED);
+        return projectMapper.toDto(project);
+    }
+
     public ProjectDTO update(ProjectDTO projectDTO) {
         LOG.debug("Request to update Project : {}", projectDTO);
 
-        Project existingProject = projectRepository
-            .findById(projectDTO.getId())
-            .orElseThrow(() -> new AccessDeniedException("Project not found"));
-
+        Project existingProject = getExistingProject(projectDTO.getId());
         Long organizationId = existingProject.getOrganizationId();
         organizationAccessService.assertMember(organizationId);
 
@@ -72,12 +103,6 @@ public class ProjectService {
         return projectMapper.toDto(project);
     }
 
-    /**
-     * Partially update a project.
-     *
-     * @param projectDTO the entity to update partially.
-     * @return the persisted entity.
-     */
     public Optional<ProjectDTO> partialUpdate(ProjectDTO projectDTO) {
         LOG.debug("Request to partially update Project : {}", projectDTO);
 
@@ -97,24 +122,32 @@ public class ProjectService {
             .map(projectMapper::toDto);
     }
 
-    /**
-     * Get all the projects.
-     *
-     * @param pageable the pagination information.
-     * @return the list of entities.
-     */
+    public ProjectDTO archive(Long id) {
+        Project project = changeStatus(id, ProjectStatus.ARCHIVED, ActivityAction.PROJECT_ARCHIVED);
+        return projectMapper.toDto(project);
+    }
+
+    public ProjectDTO complete(Long id) {
+        Project project = changeStatus(id, ProjectStatus.COMPLETED, ActivityAction.PROJECT_COMPLETED);
+        return projectMapper.toDto(project);
+    }
+
+    private Project changeStatus(Long id, ProjectStatus status, ActivityAction action) {
+        Project project = getExistingProject(id);
+        organizationAccessService.assertMember(project.getOrganizationId());
+        project.setStatus(status);
+        project.setUpdatedAt(Instant.now());
+        project = projectRepository.save(project);
+        activityLogService.record(project.getOrganizationId(), ActivityEntityType.PROJECT, project.getId(), action);
+        return project;
+    }
+
     @Transactional(readOnly = true)
     public Page<ProjectDTO> findAll(Pageable pageable) {
         LOG.debug("Request to get all Projects");
         return projectRepository.findAll(pageable).map(projectMapper::toDto);
     }
 
-    /**
-     * Get one project by id.
-     *
-     * @param id the id of the entity.
-     * @return the entity.
-     */
     @Transactional(readOnly = true)
     public Optional<ProjectDTO> findOne(Long id) {
         LOG.debug("Request to get Project : {}", id);
@@ -127,18 +160,10 @@ public class ProjectService {
             });
     }
 
-    /**
-     * Delete the project by id.
-     *
-     * @param id the id of the entity.
-     */
     public void delete(Long id) {
         LOG.debug("Request to delete Project : {}", id);
 
-        Project existingProject = projectRepository
-            .findById(id)
-            .orElseThrow(() -> new AccessDeniedException("Project not found"));
-
+        Project existingProject = getExistingProject(id);
         organizationAccessService.assertMember(existingProject.getOrganizationId());
 
         projectRepository.deleteById(id);
@@ -151,5 +176,10 @@ public class ProjectService {
         organizationAccessService.assertMember(organizationId);
 
         return projectRepository.findByOrganizationId(organizationId, pageable).map(projectMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Project getExistingProject(Long id) {
+        return projectRepository.findById(id).orElseThrow(() -> new AccessDeniedException("Project not found"));
     }
 }

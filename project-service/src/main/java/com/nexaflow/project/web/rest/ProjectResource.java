@@ -1,182 +1,117 @@
 package com.nexaflow.project.web.rest;
 
-import com.nexaflow.project.repository.ProjectRepository;
+import com.nexaflow.project.service.ActivityLogService;
 import com.nexaflow.project.service.ProjectService;
+import com.nexaflow.project.service.TaskService;
+import com.nexaflow.project.service.dto.ActivityLogDTO;
+import com.nexaflow.project.service.dto.CreateProjectRequest;
 import com.nexaflow.project.service.dto.ProjectDTO;
-import com.nexaflow.project.web.rest.errors.BadRequestAlertException;
+import com.nexaflow.project.service.dto.TaskDTO;
+import com.nexaflow.project.service.dto.UpdateProjectRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
-/**
- * REST controller for managing {@link com.nexaflow.project.domain.Project}.
- */
 @RestController
 @RequestMapping("/api/projects")
 public class ProjectResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProjectResource.class);
-
-    private static final String ENTITY_NAME = "projectServiceProject";
-
-    @Value("${jhipster.clientApp.name:projectservice}")
-    private String applicationName;
+    private static final String ORGANIZATION_HEADER = "X-Organization-Id";
 
     private final ProjectService projectService;
+    private final TaskService taskService;
+    private final ActivityLogService activityLogService;
 
-    private final ProjectRepository projectRepository;
-
-    public ProjectResource(ProjectService projectService, ProjectRepository projectRepository) {
+    public ProjectResource(ProjectService projectService, TaskService taskService, ActivityLogService activityLogService) {
         this.projectService = projectService;
-        this.projectRepository = projectRepository;
+        this.taskService = taskService;
+        this.activityLogService = activityLogService;
     }
 
-    /**
-     * {@code POST  /projects} : Create a new project.
-     *
-     * @param projectDTO the projectDTO to create.
-     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new projectDTO, or with status {@code 400 (Bad Request)} if the project has already an ID.
-     * @throws URISyntaxException if the Location URI syntax is incorrect.
-     */
     @PostMapping("")
-    public ResponseEntity<ProjectDTO> createProject(@Valid @RequestBody ProjectDTO projectDTO) throws URISyntaxException {
-        LOG.debug("REST request to save Project : {}", projectDTO);
-        if (projectDTO.getId() != null) {
-            throw new BadRequestAlertException("A new project cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        projectDTO = projectService.save(projectDTO);
-        return ResponseEntity.created(new URI("/api/projects/" + projectDTO.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, false, ENTITY_NAME, projectDTO.getId().toString()))
-            .body(projectDTO);
-    }
-
-    /**
-     * {@code PUT  /projects/:id} : Updates an existing project.
-     *
-     * @param id the id of the projectDTO to save.
-     * @param projectDTO the projectDTO to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated projectDTO,
-     * or with status {@code 400 (Bad Request)} if the projectDTO is not valid,
-     * or with status {@code 500 (Internal Server Error)} if the projectDTO couldn't be updated.
-     * @throws URISyntaxException if the Location URI syntax is incorrect.
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<ProjectDTO> updateProject(
-        @PathVariable(value = "id", required = false) final Long id,
-        @Valid @RequestBody ProjectDTO projectDTO
+    public ResponseEntity<ProjectDTO> createProject(
+        @RequestHeader(ORGANIZATION_HEADER) Long organizationId,
+        @Valid @RequestBody CreateProjectRequest request
     ) throws URISyntaxException {
-        LOG.debug("REST request to update Project : {}, {}", id, projectDTO);
-        if (projectDTO.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
-        }
-        if (!Objects.equals(id, projectDTO.getId())) {
-            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
-        }
-
-        if (!projectRepository.existsById(id)) {
-            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
-        }
-
-        projectDTO = projectService.update(projectDTO);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(applicationName, false, ENTITY_NAME, projectDTO.getId().toString()))
-            .body(projectDTO);
+        LOG.debug("REST request to create Project in organization {} : {}", organizationId, request);
+        ProjectDTO result = projectService.create(organizationId, request);
+        return ResponseEntity.created(new URI("/api/projects/" + result.getId())).body(result);
     }
 
-    /**
-     * {@code PATCH  /projects/:id} : Partial updates given fields of an existing project, field will ignore if it is null
-     *
-     * @param id the id of the projectDTO to save.
-     * @param projectDTO the projectDTO to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated projectDTO,
-     * or with status {@code 400 (Bad Request)} if the projectDTO is not valid,
-     * or with status {@code 404 (Not Found)} if the projectDTO is not found,
-     * or with status {@code 500 (Internal Server Error)} if the projectDTO couldn't be updated.
-     * @throws URISyntaxException if the Location URI syntax is incorrect.
-     */
-    @PatchMapping(value = "/{id}", consumes = { "application/json", "application/merge-patch+json" })
-    public ResponseEntity<ProjectDTO> partialUpdateProject(
-        @PathVariable(value = "id", required = false) final Long id,
-        @NotNull @RequestBody ProjectDTO projectDTO
-    ) throws URISyntaxException {
-        LOG.debug("REST request to partial update Project partially : {}, {}", id, projectDTO);
-        if (projectDTO.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
-        }
-        if (!Objects.equals(id, projectDTO.getId())) {
-            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
-        }
-
-        if (!projectRepository.existsById(id)) {
-            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
-        }
-
-        Optional<ProjectDTO> result = projectService.partialUpdate(projectDTO);
-
-        return ResponseUtil.wrapOrNotFound(
-            result,
-            HeaderUtil.createEntityUpdateAlert(applicationName, false, ENTITY_NAME, projectDTO.getId().toString())
-        );
-    }
-
-    /**
-     * {@code GET  /projects} : get all the Projects.
-     *
-     * @param pageable the pagination information.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of Projects in body.
-     */
     @GetMapping("")
     public ResponseEntity<List<ProjectDTO>> getAllProjects(
-        @RequestParam Long organizationId,
+        @RequestHeader(ORGANIZATION_HEADER) Long organizationId,
         @org.springdoc.core.annotations.ParameterObject Pageable pageable
     ) {
-        LOG.debug("REST request to get a page of Projects for organization : {}", organizationId);
+        LOG.debug("REST request to get Projects for organization : {}", organizationId);
         Page<ProjectDTO> page = projectService.findAllByOrganization(organizationId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
-    /**
-     * {@code GET  /projects/:id} : get the "id" project.
-     *
-     * @param id the id of the projectDTO to retrieve.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the projectDTO, or with status {@code 404 (Not Found)}.
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDTO> getProject(@PathVariable("id") Long id) {
         LOG.debug("REST request to get Project : {}", id);
-        Optional<ProjectDTO> projectDTO = projectService.findOne(id);
-        return ResponseUtil.wrapOrNotFound(projectDTO);
+        return ResponseUtil.wrapOrNotFound(projectService.findOne(id));
     }
 
-    /**
-     * {@code DELETE  /projects/:id} : delete the "id" project.
-     *
-     * @param id the id of the projectDTO to delete.
-     * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
-     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjectDTO> updateProject(@PathVariable("id") Long id, @Valid @RequestBody UpdateProjectRequest request) {
+        LOG.debug("REST request to update Project : {}, {}", id, request);
+        return ResponseEntity.ok(projectService.update(id, request));
+    }
+
+    @PatchMapping("/{id}/archive")
+    public ResponseEntity<ProjectDTO> archiveProject(@PathVariable("id") Long id) {
+        LOG.debug("REST request to archive Project : {}", id);
+        return ResponseEntity.ok(projectService.archive(id));
+    }
+
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<ProjectDTO> completeProject(@PathVariable("id") Long id) {
+        LOG.debug("REST request to complete Project : {}", id);
+        return ResponseEntity.ok(projectService.complete(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProject(@PathVariable("id") Long id) {
         LOG.debug("REST request to delete Project : {}", id);
         projectService.delete(id);
-        return ResponseEntity.noContent()
-            .headers(HeaderUtil.createEntityDeletionAlert(applicationName, false, ENTITY_NAME, id.toString()))
-            .build();
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/tasks")
+    public ResponseEntity<List<TaskDTO>> getProjectTasks(
+        @PathVariable("id") Long id,
+        @org.springdoc.core.annotations.ParameterObject Pageable pageable
+    ) {
+        LOG.debug("REST request to get Tasks for Project : {}", id);
+        Page<TaskDTO> page = taskService.findByProject(id, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    @GetMapping("/{id}/activity-logs")
+    public ResponseEntity<List<ActivityLogDTO>> getProjectActivityLogs(
+        @PathVariable("id") Long id,
+        @org.springdoc.core.annotations.ParameterObject Pageable pageable
+    ) {
+        LOG.debug("REST request to get ActivityLogs for Project : {}", id);
+        Long organizationId = projectService.getExistingProject(id).getOrganizationId();
+        Page<ActivityLogDTO> page = activityLogService.findByProject(id, organizationId, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 }

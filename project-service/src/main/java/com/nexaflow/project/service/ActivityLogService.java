@@ -1,10 +1,14 @@
 package com.nexaflow.project.service;
 
 import com.nexaflow.project.domain.ActivityLog;
+import com.nexaflow.project.domain.enumeration.ActivityAction;
+import com.nexaflow.project.domain.enumeration.ActivityEntityType;
 import com.nexaflow.project.repository.ActivityLogRepository;
 import com.nexaflow.project.security.OrganizationAccessService;
+import com.nexaflow.project.security.SecurityUtils;
 import com.nexaflow.project.service.dto.ActivityLogDTO;
 import com.nexaflow.project.service.mapper.ActivityLogMapper;
+import java.time.Instant;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +43,6 @@ public class ActivityLogService {
         this.organizationAccessService = organizationAccessService;
     }
 
-    /**
-     * Save a activityLog.
-     *
-     * @param activityLogDTO the entity to save.
-     * @return the persisted entity.
-     */
     public ActivityLogDTO save(ActivityLogDTO activityLogDTO) {
         LOG.debug("Request to save ActivityLog : {}", activityLogDTO);
         organizationAccessService.assertMember(activityLogDTO.getOrganizationId());
@@ -54,12 +52,6 @@ public class ActivityLogService {
         return activityLogMapper.toDto(activityLog);
     }
 
-    /**
-     * Update a activityLog.
-     *
-     * @param activityLogDTO the entity to save.
-     * @return the persisted entity.
-     */
     public ActivityLogDTO update(ActivityLogDTO activityLogDTO) {
         LOG.debug("Request to update ActivityLog : {}", activityLogDTO);
 
@@ -76,12 +68,6 @@ public class ActivityLogService {
         return activityLogMapper.toDto(activityLog);
     }
 
-    /**
-     * Partially update a activityLog.
-     *
-     * @param activityLogDTO the entity to update partially.
-     * @return the persisted entity.
-     */
     public Optional<ActivityLogDTO> partialUpdate(ActivityLogDTO activityLogDTO) {
         LOG.debug("Request to partially update ActivityLog : {}", activityLogDTO);
 
@@ -102,6 +88,12 @@ public class ActivityLogService {
     }
 
     @Transactional(readOnly = true)
+    public Page<ActivityLogDTO> findAll(Pageable pageable) {
+        LOG.debug("Request to get all ActivityLogs");
+        return activityLogRepository.findAll(pageable).map(activityLogMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
     public Page<ActivityLogDTO> findAllByOrganization(Long organizationId, Pageable pageable) {
         LOG.debug("Request to get ActivityLogs for organization : {}", organizationId);
 
@@ -110,24 +102,24 @@ public class ActivityLogService {
         return activityLogRepository.findByOrganizationId(organizationId, pageable).map(activityLogMapper::toDto);
     }
 
-    /**
-     * Get all the activityLogs.
-     *
-     * @param pageable the pagination information.
-     * @return the list of entities.
-     */
     @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> findAll(Pageable pageable) {
-        LOG.debug("Request to get all ActivityLogs");
-        return activityLogRepository.findAll(pageable).map(activityLogMapper::toDto);
+    public Page<ActivityLogDTO> findByProject(Long projectId, Long organizationId, Pageable pageable) {
+        LOG.debug("Request to get ActivityLogs for project : {}", projectId);
+        organizationAccessService.assertMember(organizationId);
+        return activityLogRepository
+            .findByOrganizationIdAndEntityTypeAndEntityId(organizationId, ActivityEntityType.PROJECT, projectId, pageable)
+            .map(activityLogMapper::toDto);
     }
 
-    /**
-     * Get one activityLog by id.
-     *
-     * @param id the id of the entity.
-     * @return the entity.
-     */
+    @Transactional(readOnly = true)
+    public Page<ActivityLogDTO> findByTask(Long taskId, Long organizationId, Pageable pageable) {
+        LOG.debug("Request to get ActivityLogs for task : {}", taskId);
+        organizationAccessService.assertMember(organizationId);
+        return activityLogRepository
+            .findByOrganizationIdAndEntityTypeAndEntityId(organizationId, ActivityEntityType.TASK, taskId, pageable)
+            .map(activityLogMapper::toDto);
+    }
+
     @Transactional(readOnly = true)
     public Optional<ActivityLogDTO> findOne(Long id) {
         LOG.debug("Request to get ActivityLog : {}", id);
@@ -139,11 +131,6 @@ public class ActivityLogService {
             });
     }
 
-    /**
-     * Delete the activityLog by id.
-     *
-     * @param id the id of the entity.
-     */
     public void delete(Long id) {
         LOG.debug("Request to delete ActivityLog : {}", id);
 
@@ -154,5 +141,16 @@ public class ActivityLogService {
         organizationAccessService.assertMember(existingActivityLog.getOrganizationId());
 
         activityLogRepository.deleteById(id);
+    }
+
+    public void record(Long organizationId, ActivityEntityType entityType, Long entityId, ActivityAction action) {
+        ActivityLog activityLog = new ActivityLog();
+        activityLog.setOrganizationId(organizationId);
+        activityLog.setEntityType(entityType);
+        activityLog.setEntityId(entityId);
+        activityLog.setAction(action);
+        activityLog.setPerformedBy(SecurityUtils.getCurrentUserLogin().orElse("system"));
+        activityLog.setCreatedAt(Instant.now());
+        activityLogRepository.save(activityLog);
     }
 }

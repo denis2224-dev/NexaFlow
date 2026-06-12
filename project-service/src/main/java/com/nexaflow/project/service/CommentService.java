@@ -1,10 +1,18 @@
 package com.nexaflow.project.service;
 
 import com.nexaflow.project.domain.Comment;
+import com.nexaflow.project.domain.Task;
+import com.nexaflow.project.domain.enumeration.ActivityAction;
+import com.nexaflow.project.domain.enumeration.ActivityEntityType;
 import com.nexaflow.project.repository.CommentRepository;
+import com.nexaflow.project.repository.TaskRepository;
 import com.nexaflow.project.security.OrganizationAccessService;
+import com.nexaflow.project.security.SecurityUtils;
 import com.nexaflow.project.service.dto.CommentDTO;
+import com.nexaflow.project.service.dto.CreateCommentRequest;
+import com.nexaflow.project.service.dto.UpdateCommentRequest;
 import com.nexaflow.project.service.mapper.CommentMapper;
+import java.time.Instant;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,27 +32,52 @@ public class CommentService {
     private static final Logger LOG = LoggerFactory.getLogger(CommentService.class);
 
     private final CommentRepository commentRepository;
-
+    private final TaskRepository taskRepository;
     private final CommentMapper commentMapper;
-
     private final OrganizationAccessService organizationAccessService;
+    private final ActivityLogService activityLogService;
 
     public CommentService(
         CommentRepository commentRepository,
+        TaskRepository taskRepository,
         CommentMapper commentMapper,
-        OrganizationAccessService organizationAccessService
+        OrganizationAccessService organizationAccessService,
+        ActivityLogService activityLogService
     ) {
         this.commentRepository = commentRepository;
+        this.taskRepository = taskRepository;
         this.commentMapper = commentMapper;
         this.organizationAccessService = organizationAccessService;
+        this.activityLogService = activityLogService;
     }
 
-    /**
-     * Save a comment.
-     *
-     * @param commentDTO the entity to save.
-     * @return the persisted entity.
-     */
+    public CommentDTO addToTask(Long taskId, CreateCommentRequest request) {
+        LOG.debug("Request to add Comment to Task {} : {}", taskId, request);
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new AccessDeniedException("Task not found"));
+        organizationAccessService.assertMember(task.getOrganizationId());
+
+        Comment comment = new Comment();
+        comment.setOrganizationId(task.getOrganizationId());
+        comment.setTask(task);
+        comment.setContent(request.content());
+        comment.setAuthorLogin(SecurityUtils.getCurrentUserLogin().orElse("system"));
+        comment.setCreatedAt(Instant.now());
+
+        comment = commentRepository.save(comment);
+        activityLogService.record(comment.getOrganizationId(), ActivityEntityType.TASK, taskId, ActivityAction.COMMENT_ADDED);
+        return commentMapper.toDto(comment);
+    }
+
+    public CommentDTO update(Long id, UpdateCommentRequest request) {
+        LOG.debug("Request to update Comment : {}, {}", id, request);
+        Comment comment = getExistingComment(id);
+        organizationAccessService.assertMember(comment.getOrganizationId());
+        comment.setContent(request.content());
+        comment = commentRepository.save(comment);
+        activityLogService.record(comment.getOrganizationId(), ActivityEntityType.COMMENT, comment.getId(), ActivityAction.COMMENT_UPDATED);
+        return commentMapper.toDto(comment);
+    }
+
     public CommentDTO save(CommentDTO commentDTO) {
         LOG.debug("Request to save Comment : {}", commentDTO);
         organizationAccessService.assertMember(commentDTO.getOrganizationId());
@@ -54,19 +87,10 @@ public class CommentService {
         return commentMapper.toDto(comment);
     }
 
-    /**
-     * Update a comment.
-     *
-     * @param commentDTO the entity to save.
-     * @return the persisted entity.
-     */
     public CommentDTO update(CommentDTO commentDTO) {
         LOG.debug("Request to update Comment : {}", commentDTO);
 
-        Comment existingComment = commentRepository
-            .findById(commentDTO.getId())
-            .orElseThrow(() -> new AccessDeniedException("Comment not found"));
-
+        Comment existingComment = getExistingComment(commentDTO.getId());
         Long organizationId = existingComment.getOrganizationId();
         organizationAccessService.assertMember(organizationId);
         commentDTO.setOrganizationId(organizationId);
@@ -76,12 +100,6 @@ public class CommentService {
         return commentMapper.toDto(comment);
     }
 
-    /**
-     * Partially update a comment.
-     *
-     * @param commentDTO the entity to update partially.
-     * @return the persisted entity.
-     */
     public Optional<CommentDTO> partialUpdate(CommentDTO commentDTO) {
         LOG.debug("Request to partially update Comment : {}", commentDTO);
 
@@ -110,24 +128,20 @@ public class CommentService {
         return commentRepository.findByOrganizationId(organizationId, pageable).map(commentMapper::toDto);
     }
 
-    /**
-     * Get all the comments.
-     *
-     * @param pageable the pagination information.
-     * @return the list of entities.
-     */
+    @Transactional(readOnly = true)
+    public Page<CommentDTO> findByTask(Long taskId, Pageable pageable) {
+        LOG.debug("Request to get Comments for task : {}", taskId);
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new AccessDeniedException("Task not found"));
+        organizationAccessService.assertMember(task.getOrganizationId());
+        return commentRepository.findByTaskId(taskId, pageable).map(commentMapper::toDto);
+    }
+
     @Transactional(readOnly = true)
     public Page<CommentDTO> findAll(Pageable pageable) {
         LOG.debug("Request to get all Comments");
         return commentRepository.findAll(pageable).map(commentMapper::toDto);
     }
 
-    /**
-     * Get one comment by id.
-     *
-     * @param id the id of the entity.
-     * @return the entity.
-     */
     @Transactional(readOnly = true)
     public Optional<CommentDTO> findOne(Long id) {
         LOG.debug("Request to get Comment : {}", id);
@@ -139,20 +153,16 @@ public class CommentService {
             });
     }
 
-    /**
-     * Delete the comment by id.
-     *
-     * @param id the id of the entity.
-     */
     public void delete(Long id) {
         LOG.debug("Request to delete Comment : {}", id);
 
-        Comment existingComment = commentRepository
-            .findById(id)
-            .orElseThrow(() -> new AccessDeniedException("Comment not found"));
-
+        Comment existingComment = getExistingComment(id);
         organizationAccessService.assertMember(existingComment.getOrganizationId());
 
         commentRepository.deleteById(id);
+    }
+
+    private Comment getExistingComment(Long id) {
+        return commentRepository.findById(id).orElseThrow(() -> new AccessDeniedException("Comment not found"));
     }
 }
