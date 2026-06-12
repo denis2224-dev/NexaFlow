@@ -142,9 +142,12 @@ public class ActivityLogResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of Activity Logs in body.
      */
     @GetMapping("")
-    public ResponseEntity<List<ActivityLogDTO>> getAllActivityLogs(@org.springdoc.core.annotations.ParameterObject Pageable pageable) {
-        LOG.debug("REST request to get a page of ActivityLogs");
-        Page<ActivityLogDTO> page = activityLogService.findAll(pageable);
+    public ResponseEntity<List<ActivityLogDTO>> getAllActivityLogs(
+        @RequestParam Long organizationId,
+        @org.springdoc.core.annotations.ParameterObject Pageable pageable
+    ) {
+        LOG.debug("REST request to get a page of ActivityLogs for organization : {}", organizationId);
+        Page<ActivityLogDTO> page = activityLogService.findAllByOrganization(organizationId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }

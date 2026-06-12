@@ -13,6 +13,7 @@ import com.nexaflow.project.domain.ActivityLog;
 import com.nexaflow.project.domain.enumeration.ActivityAction;
 import com.nexaflow.project.domain.enumeration.ActivityEntityType;
 import com.nexaflow.project.repository.ActivityLogRepository;
+import com.nexaflow.project.security.OrganizationAccessService;
 import com.nexaflow.project.service.dto.ActivityLogDTO;
 import com.nexaflow.project.service.mapper.ActivityLogMapper;
 import jakarta.persistence.EntityManager;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +72,9 @@ class ActivityLogResourceIT {
 
     @Autowired
     private ActivityLogMapper activityLogMapper;
+
+    @MockitoBean
+    private OrganizationAccessService organizationAccessService;
 
     @Autowired
     private EntityManager em;
@@ -278,7 +283,7 @@ class ActivityLogResourceIT {
 
         // Get all the activityLogList
         restActivityLogMockMvc
-            .perform(get(ENTITY_API_URL + "?sort=id,desc"))
+            .perform(get(ENTITY_API_URL + "?organizationId={organizationId}&sort=id,desc", DEFAULT_ORGANIZATION_ID))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(activityLog.getId().intValue())))
@@ -345,6 +350,8 @@ class ActivityLogResourceIT {
                     .content(om.writeValueAsBytes(activityLogDTO))
             )
             .andExpect(status().isOk());
+
+        updatedActivityLog.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the ActivityLog in the database
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -435,6 +442,8 @@ class ActivityLogResourceIT {
             )
             .andExpect(status().isOk());
 
+        partialUpdatedActivityLog.organizationId(DEFAULT_ORGANIZATION_ID);
+
         // Validate the ActivityLog in the database
 
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -471,6 +480,8 @@ class ActivityLogResourceIT {
                     .content(om.writeValueAsBytes(partialUpdatedActivityLog))
             )
             .andExpect(status().isOk());
+
+        partialUpdatedActivityLog.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the ActivityLog in the database
 

@@ -14,6 +14,7 @@ import com.nexaflow.project.domain.Task;
 import com.nexaflow.project.domain.enumeration.TaskPriority;
 import com.nexaflow.project.domain.enumeration.TaskStatus;
 import com.nexaflow.project.repository.TaskRepository;
+import com.nexaflow.project.security.OrganizationAccessService;
 import com.nexaflow.project.service.dto.TaskDTO;
 import com.nexaflow.project.service.mapper.TaskMapper;
 import jakarta.persistence.EntityManager;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,6 +87,9 @@ class TaskResourceIT {
 
     @Autowired
     private TaskMapper taskMapper;
+
+    @MockitoBean
+    private OrganizationAccessService organizationAccessService;
 
     @Autowired
     private EntityManager em;
@@ -323,7 +328,7 @@ class TaskResourceIT {
 
         // Get all the taskList
         restTaskMockMvc
-            .perform(get(ENTITY_API_URL + "?sort=id,desc"))
+            .perform(get(ENTITY_API_URL + "?organizationId={organizationId}&sort=id,desc", DEFAULT_ORGANIZATION_ID))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(task.getId().intValue())))
@@ -398,6 +403,8 @@ class TaskResourceIT {
         restTaskMockMvc
             .perform(put(ENTITY_API_URL_ID, taskDTO.getId()).contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsBytes(taskDTO)))
             .andExpect(status().isOk());
+
+        updatedTask.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the Task in the database
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -491,6 +498,8 @@ class TaskResourceIT {
             )
             .andExpect(status().isOk());
 
+        partialUpdatedTask.organizationId(DEFAULT_ORGANIZATION_ID);
+
         // Validate the Task in the database
 
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -528,6 +537,8 @@ class TaskResourceIT {
                     .content(om.writeValueAsBytes(partialUpdatedTask))
             )
             .andExpect(status().isOk());
+
+        partialUpdatedTask.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the Task in the database
 

@@ -12,6 +12,7 @@ import com.nexaflow.project.IntegrationTest;
 import com.nexaflow.project.domain.Comment;
 import com.nexaflow.project.domain.Task;
 import com.nexaflow.project.repository.CommentRepository;
+import com.nexaflow.project.security.OrganizationAccessService;
 import com.nexaflow.project.service.dto.CommentDTO;
 import com.nexaflow.project.service.mapper.CommentMapper;
 import jakarta.persistence.EntityManager;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +65,9 @@ class CommentResourceIT {
 
     @Autowired
     private CommentMapper commentMapper;
+
+    @MockitoBean
+    private OrganizationAccessService organizationAccessService;
 
     @Autowired
     private EntityManager em;
@@ -238,7 +243,7 @@ class CommentResourceIT {
 
         // Get all the commentList
         restCommentMockMvc
-            .perform(get(ENTITY_API_URL + "?sort=id,desc"))
+            .perform(get(ENTITY_API_URL + "?organizationId={organizationId}&sort=id,desc", DEFAULT_ORGANIZATION_ID))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(comment.getId().intValue())))
@@ -297,6 +302,8 @@ class CommentResourceIT {
                 put(ENTITY_API_URL_ID, commentDTO.getId()).contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsBytes(commentDTO))
             )
             .andExpect(status().isOk());
+
+        updatedComment.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the Comment in the database
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -385,6 +392,8 @@ class CommentResourceIT {
             )
             .andExpect(status().isOk());
 
+        partialUpdatedComment.organizationId(DEFAULT_ORGANIZATION_ID);
+
         // Validate the Comment in the database
 
         assertSameRepositoryCount(databaseSizeBeforeUpdate);
@@ -416,6 +425,8 @@ class CommentResourceIT {
                     .content(om.writeValueAsBytes(partialUpdatedComment))
             )
             .andExpect(status().isOk());
+
+        partialUpdatedComment.organizationId(DEFAULT_ORGANIZATION_ID);
 
         // Validate the Comment in the database
 

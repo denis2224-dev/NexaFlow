@@ -142,9 +142,12 @@ public class CommentResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of Comments in body.
      */
     @GetMapping("")
-    public ResponseEntity<List<CommentDTO>> getAllComments(@org.springdoc.core.annotations.ParameterObject Pageable pageable) {
-        LOG.debug("REST request to get a page of Comments");
-        Page<CommentDTO> page = commentService.findAll(pageable);
+    public ResponseEntity<List<CommentDTO>> getAllComments(
+        @RequestParam Long organizationId,
+        @org.springdoc.core.annotations.ParameterObject Pageable pageable
+    ) {
+        LOG.debug("REST request to get a page of Comments for organization : {}", organizationId);
+        Page<CommentDTO> page = commentService.findAllByOrganization(organizationId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
