@@ -4,7 +4,9 @@ import com.nexaflow.project.domain.Project;
 import com.nexaflow.project.domain.enumeration.ActivityAction;
 import com.nexaflow.project.domain.enumeration.ActivityEntityType;
 import com.nexaflow.project.domain.enumeration.ProjectStatus;
+import com.nexaflow.project.repository.CommentRepository;
 import com.nexaflow.project.repository.ProjectRepository;
+import com.nexaflow.project.repository.TaskRepository;
 import com.nexaflow.project.security.OrganizationAccessService;
 import com.nexaflow.project.security.SecurityUtils;
 import com.nexaflow.project.service.dto.CreateProjectRequest;
@@ -33,17 +35,23 @@ public class ProjectService {
     private static final String ENTITY_NAME = "project";
 
     private final ProjectRepository projectRepository;
+    private final TaskRepository taskRepository;
+    private final CommentRepository commentRepository;
     private final ProjectMapper projectMapper;
     private final OrganizationAccessService organizationAccessService;
     private final ActivityLogService activityLogService;
 
     public ProjectService(
         ProjectRepository projectRepository,
+        TaskRepository taskRepository,
+        CommentRepository commentRepository,
         ProjectMapper projectMapper,
         OrganizationAccessService organizationAccessService,
         ActivityLogService activityLogService
     ) {
         this.projectRepository = projectRepository;
+        this.taskRepository = taskRepository;
+        this.commentRepository = commentRepository;
         this.projectMapper = projectMapper;
         this.organizationAccessService = organizationAccessService;
         this.activityLogService = activityLogService;
@@ -137,6 +145,21 @@ public class ProjectService {
         return projectMapper.toDto(project);
     }
 
+    public ProjectDTO unarchive(Long id) {
+        Project project = getExistingProject(id);
+        organizationAccessService.assertMember(project.getOrganizationId());
+
+        if (project.getStatus() != ProjectStatus.ARCHIVED) {
+            return projectMapper.toDto(project);
+        }
+
+        project.setStatus(ProjectStatus.ACTIVE);
+        project.setUpdatedAt(Instant.now());
+        project = projectRepository.save(project);
+        activityLogService.record(project.getOrganizationId(), ActivityEntityType.PROJECT, project.getId(), ActivityAction.PROJECT_UPDATED);
+        return projectMapper.toDto(project);
+    }
+
     private Project changeStatus(Long id, ProjectStatus status, ActivityAction action) {
         Project project = getExistingProject(id);
         organizationAccessService.assertMember(project.getOrganizationId());
@@ -172,6 +195,8 @@ public class ProjectService {
         Project existingProject = getExistingProject(id);
         organizationAccessService.assertAdminOrOwner(existingProject.getOrganizationId());
 
+        commentRepository.deleteByTaskProjectId(id);
+        taskRepository.deleteByProjectId(id);
         projectRepository.deleteById(id);
     }
 

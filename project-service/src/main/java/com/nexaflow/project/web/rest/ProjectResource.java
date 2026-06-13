@@ -79,6 +79,12 @@ public class ProjectResource {
         return ResponseEntity.ok(projectService.archive(id));
     }
 
+    @PatchMapping("/{id}/unarchive")
+    public ResponseEntity<ProjectDTO> unarchiveProject(@PathVariable("id") Long id) {
+        LOG.debug("REST request to unarchive Project : {}", id);
+        return ResponseEntity.ok(projectService.unarchive(id));
+    }
+
     @PatchMapping("/{id}/complete")
     public ResponseEntity<ProjectDTO> completeProject(@PathVariable("id") Long id) {
         LOG.debug("REST request to complete Project : {}", id);

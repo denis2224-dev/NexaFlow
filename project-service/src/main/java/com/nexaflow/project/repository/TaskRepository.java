@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @SuppressWarnings("unused")
@@ -17,6 +18,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     Optional<Task> findOneByIdAndOrganizationId(Long id, Long organizationId);
 
     Page<Task> findByProjectId(Long projectId, Pageable pageable);
+
+    @Modifying
+    @Query("delete from Task task where task.project.id = :projectId")
+    void deleteByProjectId(@Param("projectId") Long projectId);
 
     Page<Task> findByOrganizationIdAndAssignedUserLogin(Long organizationId, String assignedUserLogin, Pageable pageable);
 

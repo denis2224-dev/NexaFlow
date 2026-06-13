@@ -6,6 +6,7 @@ import com.nexaflow.project.domain.enumeration.ActivityAction;
 import com.nexaflow.project.domain.enumeration.ActivityEntityType;
 import com.nexaflow.project.domain.enumeration.ProjectStatus;
 import com.nexaflow.project.domain.enumeration.TaskStatus;
+import com.nexaflow.project.repository.CommentRepository;
 import com.nexaflow.project.repository.ProjectRepository;
 import com.nexaflow.project.repository.TaskRepository;
 import com.nexaflow.project.security.OrganizationAccessService;
@@ -39,6 +40,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final CommentRepository commentRepository;
     private final TaskMapper taskMapper;
     private final OrganizationAccessService organizationAccessService;
     private final ActivityLogService activityLogService;
@@ -46,12 +48,14 @@ public class TaskService {
     public TaskService(
         TaskRepository taskRepository,
         ProjectRepository projectRepository,
+        CommentRepository commentRepository,
         TaskMapper taskMapper,
         OrganizationAccessService organizationAccessService,
         ActivityLogService activityLogService
     ) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
+        this.commentRepository = commentRepository;
         this.taskMapper = taskMapper;
         this.organizationAccessService = organizationAccessService;
         this.activityLogService = activityLogService;
@@ -238,6 +242,7 @@ public class TaskService {
         organizationAccessService.assertMember(existingTask.getOrganizationId());
         assertTaskProjectNotArchived(existingTask);
 
+        commentRepository.deleteByTaskId(id);
         taskRepository.deleteById(id);
     }
 
