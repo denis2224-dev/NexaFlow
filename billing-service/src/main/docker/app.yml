@@ -1,18 +1,18 @@
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
-name: billing-service
+name: billingservice
 services:
   app:
-    image: billing-service
+    image: billingservice
     environment:
       - _JAVA_OPTIONS=-Xmx512m -Xms256m
       - SPRING_PROFILES_ACTIVE=prod,api-docs,secret-samples
       - MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED=true
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresql:5432/billing-service
-      - SPRING_DATASOURCE_USERNAME=billing-service
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresql:5432/BillingService
+      - SPRING_DATASOURCE_USERNAME=BillingService
       - SPRING_DATASOURCE_PASSWORD=
-      - SPRING_LIQUIBASE_URL=jdbc:postgresql://postgresql:5432/billing-service
+      - SPRING_LIQUIBASE_URL=jdbc:postgresql://postgresql:5432/BillingService
     healthcheck:
       test:
         - CMD-SHELL

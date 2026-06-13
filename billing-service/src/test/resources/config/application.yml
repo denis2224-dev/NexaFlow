@@ -15,7 +15,7 @@
 
 spring:
   application:
-    name: billing-service
+    name: BillingService
   cloud:
     consul:
       discovery:
@@ -67,7 +67,7 @@ server:
 # ===================================================================
 jhipster:
   mail:
-    from: billing-service@localhost.com
+    from: BillingService@localhost.com
     base-url: http://127.0.0.1:8080
   logging:
     # To test json console appender

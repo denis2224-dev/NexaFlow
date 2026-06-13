@@ -10,7 +10,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 public interface DatabaseTestcontainer {
     @Container
     PostgreSQLContainer databaseContainer = new PostgreSQLContainer("postgres:18.4")
-        .withDatabaseName("billing-service")
+        .withDatabaseName("BillingService")
 
         .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(DatabaseTestcontainer.class)))
         .withReuse(true);

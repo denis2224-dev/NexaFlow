@@ -99,13 +99,13 @@ management:
 
 spring:
   application:
-    name: billing-service
+    name: BillingService
   cloud:
     consul:
       discovery:
         healthCheckPath: /management/health
-        instanceId: billing-service:${spring.application.instance-id:${random.value}}
-        service-name: billing-service
+        instanceId: billingservice:${spring.application.instance-id:${random.value}}
+        service-name: billingservice
       config:
         watch:
           enabled: false
@@ -205,7 +205,7 @@ info:
 
 jhipster:
   mail:
-    from: billing-service@localhost
+    from: BillingService@localhost
   api-docs:
     default-include-pattern: /api/**
     management-include-pattern: /management/**

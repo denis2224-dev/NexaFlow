@@ -631,7 +631,7 @@
                             </platforms>
                         </from>
                         <to>
-                            <image>billing-service:latest</image>
+                            <image>billingservice:latest</image>
                         </to>
                         <container>
                             <entrypoint>
@@ -836,8 +836,8 @@
             <properties>
                 <!-- default Spring profiles -->
                 <liquibase-plugin.password/>
-                <liquibase-plugin.url>jdbc:postgresql://localhost:5432/billing-service</liquibase-plugin.url>
-                <liquibase-plugin.username>billing-service</liquibase-plugin.username>
+                <liquibase-plugin.url>jdbc:postgresql://localhost:5432/BillingService</liquibase-plugin.url>
+                <liquibase-plugin.username>BillingService</liquibase-plugin.username>
                 <profile.test>test,testdev</profile.test>
                 <spring.profiles.active>dev${profile.tls}${profile.no-liquibase}</spring.profiles.active>
             </properties>
@@ -936,8 +936,8 @@
             <properties>
                 <!-- default Spring profiles -->
                 <liquibase-plugin.password/>
-                <liquibase-plugin.url>jdbc:postgresql://localhost:5432/billing-service</liquibase-plugin.url>
-                <liquibase-plugin.username>billing-service</liquibase-plugin.username>
+                <liquibase-plugin.url>jdbc:postgresql://localhost:5432/BillingService</liquibase-plugin.url>
+                <liquibase-plugin.username>BillingService</liquibase-plugin.username>
                 <profile.test>test,testprod</profile.test>
                 <spring.profiles.active>prod${profile.api-docs}${profile.tls}${profile.e2e}${profile.no-liquibase}</spring.profiles.active>
             </properties>

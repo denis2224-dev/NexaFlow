@@ -1,0 +1,68 @@
+application {
+  config {
+    baseName BillingService
+    applicationType microservice
+    packageName com.nexaflow.billing
+    authenticationType jwt
+    prodDatabaseType postgresql
+    devDatabaseType postgresql
+    databaseType sql
+    serviceDiscoveryType consul
+    buildTool maven
+    serverPort 8083
+    skipClient true
+  }
+
+  entities Plan, Subscription
+}
+
+enum PlanCode {
+  FREE,
+  PRO,
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE,
+  CANCELLED,
+  EXPIRED
+}
+
+entity Plan {
+  code PlanCode required unique
+  name String required maxlength(100)
+
+  priceMonthly BigDecimal required min(0)
+
+  maxProjects Integer required min(0)
+  maxUsers Integer required min(0)
+  maxTasks Integer required min(0)
+
+  active Boolean required
+
+  createdAt Instant
+  updatedAt Instant
+}
+
+entity Subscription {
+  organizationId Long required min(1)
+
+  planCode PlanCode required
+  status SubscriptionStatus required
+
+  startedAt Instant required
+  expiresAt Instant
+
+  createdBy String maxlength(100)
+
+  createdAt Instant
+  updatedAt Instant
+}
+
+dto Plan, Subscription with mapstruct
+
+service Plan, Subscription with serviceClass
+
+paginate Plan, Subscription with pagination
+
+filter Plan, Subscription

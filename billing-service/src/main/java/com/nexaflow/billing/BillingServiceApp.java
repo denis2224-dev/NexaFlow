@@ -32,7 +32,7 @@ public class BillingServiceApp {
     }
 
     /**
-     * Initializes billing-service.
+     * Initializes BillingService.
      * <p>
      * Spring profiles can be configured with a program argument --spring.profiles.active=your-active-profile
      * <p>
