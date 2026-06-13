@@ -99,13 +99,13 @@ management:
 
 spring:
   application:
-    name: BillingService
+    name: billing-service
   cloud:
     consul:
       discovery:
         healthCheckPath: /management/health
-        instanceId: billingservice:${spring.application.instance-id:${random.value}}
-        service-name: billingservice
+        instanceId: billing-service:${spring.application.instance-id:${random.value}}
+        service-name: billing-service
       config:
         watch:
           enabled: false
