@@ -1,0 +1,60 @@
+<p-dialog
+  header="Create task"
+  [modal]="true"
+  [visible]="visible()"
+  [draggable]="false"
+  [style]="{ width: 'min(38rem, calc(100vw - 2rem))' }"
+  (visibleChange)="onVisibleChange($event)"
+>
+  <form class="nf-task-form" [formGroup]="form" (ngSubmit)="submit()">
+    <label>
+      <span>Title</span>
+      <input type="text" formControlName="title" placeholder="Implement JWT propagation" autocomplete="off" />
+      @if (form.controls.title.invalid && form.controls.title.touched) {
+        <small>Title is required.</small>
+      }
+    </label>
+
+    <label>
+      <span>Description</span>
+      <textarea formControlName="description" rows="4" placeholder="What needs to happen"></textarea>
+    </label>
+
+    <div class="nf-task-form__grid">
+      <label>
+        <span>Priority</span>
+        <select formControlName="priority">
+          @for (priority of priorityOptions; track priority) {
+            <option [value]="priority">{{ getPriorityLabel(priority) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Status</span>
+        <select formControlName="status">
+          @for (status of statusOptions; track status) {
+            <option [value]="status">{{ getStatusLabel(status) }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="nf-task-form__grid">
+      <label>
+        <span>Assigned user login</span>
+        <input type="text" formControlName="assignedUserLogin" placeholder="alex" autocomplete="off" />
+      </label>
+
+      <label>
+        <span>Due date</span>
+        <input type="date" formControlName="dueDate" />
+      </label>
+    </div>
+
+    <footer>
+      <p-button label="Cancel" severity="secondary" [outlined]="true" type="button" [disabled]="isSaving()" (onClick)="close()" />
+      <p-button label="Create task" type="submit" [loading]="isSaving()" [disabled]="form.invalid || isSaving()" />
+    </footer>
+  </form>
+</p-dialog>

@@ -1,8 +1,15 @@
 <jhi-page-header
   eyebrow="Dashboard"
   title="Command center"
-  description="Start from your workspace, invite the right people, and keep your daily work organized."
-/>
+  [description]="
+    workspaceName() ? 'Workspace: ' + workspaceName() : 'No workspace selected. Create or join a workspace to manage projects.'
+  "
+>
+  <div class="nf-workspace-context">
+    <span>Workspace</span>
+    <strong>{{ workspaceName() || 'None selected' }}</strong>
+  </div>
+</jhi-page-header>
 
 <div class="nf-dashboard-grid">
   <jhi-section-panel title="Workspace" description="Choose where your team will organize its work.">
@@ -15,7 +22,10 @@
         <div>
           <span class="nf-kicker">Available workspaces</span>
           <strong>{{ workspaces().length }}</strong>
-          <p>Select and manage your workspace context from Organizations.</p>
+          <p>
+            Current workspace:
+            <b>{{ workspaceName() || 'None selected' }}</b>
+          </p>
         </div>
         <a class="nf-button nf-button--secondary" routerLink="/app/organizations">
           <fa-icon icon="users" />
@@ -70,16 +80,58 @@
     }
   </jhi-section-panel>
 
-  <jhi-section-panel title="Projects" description="A calm place for project work once your workspace is ready.">
-    <jhi-state-panel
-      title="Projects are not set up yet"
-      description="Create or join a workspace first. Your projects, tasks, and progress will appear here when they are available."
-    >
-      <a class="nf-button" routerLink="/app/organizations">
-        <fa-icon icon="users" />
-        <span>Open organizations</span>
-      </a>
-    </jhi-state-panel>
+  <jhi-section-panel
+    title="Project summary"
+    [description]="workspaceName() ? 'Live totals for ' + workspaceName() + '.' : 'No workspace selected.'"
+  >
+    @if (isSummaryLoading()) {
+      <jhi-state-panel tone="loading" title="Loading project summary" description="Fetching project and task totals." />
+    } @else if (summaryErrorMessage()) {
+      <jhi-state-panel tone="error" title="Project summary unavailable" [description]="summaryErrorMessage()!" />
+    } @else if (summary()) {
+      <div class="nf-summary-grid">
+        <p-card styleClass="nf-summary-card">
+          <span>Total projects</span>
+          <strong>{{ summary()!.totalProjects }}</strong>
+        </p-card>
+        <p-card styleClass="nf-summary-card">
+          <span>Active projects</span>
+          <strong>{{ summary()!.activeProjects }}</strong>
+        </p-card>
+        <p-card styleClass="nf-summary-card">
+          <span>Completed projects</span>
+          <strong>{{ summary()!.completedProjects }}</strong>
+        </p-card>
+        <p-card styleClass="nf-summary-card">
+          <span>Total tasks</span>
+          <strong>{{ summary()!.totalTasks }}</strong>
+        </p-card>
+        <p-card styleClass="nf-summary-card">
+          <span>Completed tasks</span>
+          <strong>{{ summary()!.completedTasks }}</strong>
+        </p-card>
+        <p-card styleClass="nf-summary-card nf-summary-card--alert">
+          <span>Overdue tasks</span>
+          <strong>{{ summary()!.overdueTasks }}</strong>
+        </p-card>
+      </div>
+      <div class="nf-summary-actions">
+        <a class="nf-button" routerLink="/projects">
+          <fa-icon icon="tasks" />
+          <span>Open projects</span>
+        </a>
+      </div>
+    } @else {
+      <jhi-state-panel
+        title="No workspace selected"
+        description="Create or join a workspace first. Your projects, tasks, and progress will appear here when a workspace is selected."
+      >
+        <a class="nf-button" routerLink="/app/organizations">
+          <fa-icon icon="users" />
+          <span>Open organizations</span>
+        </a>
+      </jhi-state-panel>
+    }
   </jhi-section-panel>
 
   <jhi-section-panel title="Profile" description="Your personal workspace identity.">

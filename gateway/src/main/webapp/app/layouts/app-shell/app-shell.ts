@@ -6,6 +6,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { filter } from 'rxjs';
 
 import { AccountService } from 'app/core/auth/account.service';
+import ActiveOrganizationSelectorComponent from 'app/core/nexaflow/active-organization-selector.component';
+import { ActiveOrganizationService } from 'app/core/nexaflow/active-organization.service';
 import { LoginService } from 'app/login/login.service';
 import { Authority } from 'app/shared/jhipster/constants';
 
@@ -21,7 +23,7 @@ type ShellNavItem = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FontAwesomeModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FontAwesomeModule, ActiveOrganizationSelectorComponent],
 })
 export default class AppShell {
   readonly sidebarCollapsed = signal(false);
@@ -31,6 +33,7 @@ export default class AppShell {
 
   readonly navItems: ShellNavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: 'tachometer-alt', exact: true },
+    { label: 'Projects', route: '/projects', icon: 'folder-open' },
     { label: 'Organizations', route: '/app/organizations', icon: 'users' },
     { label: 'Profile', route: '/app/profile', icon: 'user', exact: true },
   ];
@@ -39,6 +42,9 @@ export default class AppShell {
     const url = this.currentUrl();
     if (url.startsWith('/app/organizations')) {
       return 'Organizations';
+    }
+    if (url.startsWith('/projects')) {
+      return 'Projects';
     }
     if (url.startsWith('/app/profile')) {
       return 'Profile';
@@ -60,9 +66,11 @@ export default class AppShell {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly accountService = inject(AccountService);
+  private readonly activeOrganizationService = inject(ActiveOrganizationService);
   private readonly loginService = inject(LoginService);
 
   constructor() {
+    this.activeOrganizationService.loadOrganizations();
     this.currentUrl.set(this.router.url);
     this.router.events
       .pipe(

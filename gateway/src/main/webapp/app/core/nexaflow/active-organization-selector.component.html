@@ -1,0 +1,22 @@
+<div class="nf-workspace-selector">
+  <span>Current workspace</span>
+
+  @if (isLoading()) {
+    <strong>Loading...</strong>
+  } @else if (workspaceOptions().length > 1) {
+    <p-select
+      styleClass="nf-workspace-select"
+      appendTo="body"
+      [options]="workspaceOptions()"
+      [ngModel]="selectedOrganizationId()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select workspace"
+      (onChange)="changeWorkspace($event)"
+    />
+  } @else if (activeWorkspaceName()) {
+    <strong>{{ activeWorkspaceName() }}</strong>
+  } @else {
+    <a routerLink="/app/organizations">{{ errorMessage() || 'No workspace selected' }}</a>
+  }
+</div>

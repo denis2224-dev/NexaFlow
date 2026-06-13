@@ -1,0 +1,37 @@
+<p-dialog
+  header="Create project"
+  [modal]="true"
+  [visible]="visible()"
+  [draggable]="false"
+  [style]="{ width: 'min(34rem, calc(100vw - 2rem))' }"
+  (visibleChange)="onVisibleChange($event)"
+>
+  <form class="nf-project-form" [formGroup]="form" (ngSubmit)="submit()">
+    <label>
+      <span>Name</span>
+      <input type="text" formControlName="name" placeholder="NexaFlow MVP" autocomplete="off" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <small>Name is required.</small>
+      }
+    </label>
+
+    <label>
+      <span>Description</span>
+      <textarea formControlName="description" rows="4" placeholder="What this project is about"></textarea>
+    </label>
+
+    <label>
+      <span>Status</span>
+      <select formControlName="status">
+        @for (status of statusOptions; track status) {
+          <option [value]="status">{{ getStatusLabel(status) }}</option>
+        }
+      </select>
+    </label>
+
+    <footer>
+      <p-button label="Cancel" severity="secondary" [outlined]="true" type="button" [disabled]="isSaving()" (onClick)="close()" />
+      <p-button label="Create project" type="submit" [loading]="isSaving()" [disabled]="form.invalid || isSaving()" />
+    </footer>
+  </form>
+</p-dialog>

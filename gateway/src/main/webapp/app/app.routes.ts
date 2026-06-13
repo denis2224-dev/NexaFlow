@@ -37,17 +37,34 @@ const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./features/dashboard/dashboard'),
-        title: 'Dashboard',
+        title: 'global.menu.app.dashboard',
       },
       {
         path: 'organizations',
         loadComponent: () => import('./features/organizations/organizations'),
-        title: 'Organizations',
+        title: 'global.menu.app.organizations',
       },
       {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile'),
-        title: 'Profile',
+        title: 'global.menu.app.profile',
+      },
+    ],
+  },
+  {
+    path: 'projects',
+    canActivate: [UserRouteAccessService],
+    loadComponent: () => import('./layouts/app-shell/app-shell'),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./entities/project/projects.component'),
+        title: 'global.menu.app.projects',
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./entities/project/project-detail.component'),
+        title: 'global.menu.app.projectDetails',
       },
     ],
   },

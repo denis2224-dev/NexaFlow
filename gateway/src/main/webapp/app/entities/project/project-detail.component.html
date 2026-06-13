@@ -1,0 +1,175 @@
+<p-toast />
+
+<jhi-page-header
+  eyebrow="Project"
+  [title]="project()?.name || 'Project details'"
+  [description]="
+    workspaceName() ? 'Workspace: ' + workspaceName() : 'No workspace selected. Create or join a workspace to manage projects.'
+  "
+>
+  <div class="nf-header-actions">
+    <div class="nf-workspace-context">
+      <span>Workspace</span>
+      <strong>{{ workspaceName() || 'None selected' }}</strong>
+    </div>
+    <p-button label="Back to projects" severity="secondary" [outlined]="true" routerLink="/projects" />
+    <p-button
+      label="Edit project"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="project()?.status === 'ARCHIVED'"
+      (onClick)="openEditProjectDialog()"
+    />
+    <p-button
+      label="Restore project"
+      severity="info"
+      [outlined]="true"
+      [disabled]="project()?.status !== 'ARCHIVED'"
+      (onClick)="unarchiveProject()"
+    />
+    <p-button label="Delete project" severity="danger" [outlined]="true" [disabled]="!project()" (onClick)="deleteProject()" />
+    <p-button
+      label="Create task"
+      icon="pi pi-plus"
+      [disabled]="project()?.status === 'ARCHIVED' || !project()"
+      (onClick)="openTaskDialog()"
+    />
+  </div>
+</jhi-page-header>
+
+@if (isProjectLoading()) {
+  <jhi-section-panel>
+    <jhi-state-panel tone="loading" title="Loading project" description="Fetching project details." />
+  </jhi-section-panel>
+} @else if (errorMessage()) {
+  <jhi-section-panel>
+    <jhi-state-panel tone="error" title="Project unavailable" [description]="errorMessage()!" />
+  </jhi-section-panel>
+} @else if (project()) {
+  <div class="nf-project-detail-grid">
+    <jhi-section-panel title="Project information" description="Core project metadata from project-service.">
+      <div class="nf-project-facts">
+        <div>
+          <span>Status</span>
+          <p-tag [value]="getStatusLabel(project()?.status)" [severity]="getStatusSeverity(project()?.status)" />
+        </div>
+        <div>
+          <span>Created by</span>
+          <strong>{{ project()?.createdBy || '-' }}</strong>
+        </div>
+        <div>
+          <span>Created</span>
+          <strong>{{ project()?.createdAt | date: 'medium' }}</strong>
+        </div>
+        <div>
+          <span>Updated</span>
+          <strong>{{ project()?.updatedAt ? (project()?.updatedAt | date: 'medium') : '-' }}</strong>
+        </div>
+      </div>
+
+      @if (project()?.description) {
+        <p class="nf-project-description">{{ project()?.description }}</p>
+      }
+    </jhi-section-panel>
+
+    <jhi-section-panel title="Tasks" description="Click a task row to open details, comments, and actions.">
+      @if (tasksErrorMessage()) {
+        <jhi-state-panel tone="error" title="Tasks unavailable" [description]="tasksErrorMessage()!" />
+      } @else {
+        <p-table
+          styleClass="nf-prime-table"
+          dataKey="id"
+          [value]="tasks()"
+          [loading]="isTasksLoading()"
+          [lazy]="true"
+          [lazyLoadOnInit]="false"
+          [paginator]="true"
+          [rows]="rows()"
+          [first]="first()"
+          [totalRecords]="totalTasks()"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first} - {last} of {totalRecords} tasks"
+          sortField="id"
+          [sortOrder]="-1"
+          (onLazyLoad)="loadTasks($event)"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="title">Title <p-sortIcon field="title" /></th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Assigned</th>
+              <th pSortableColumn="dueDate">Due date <p-sortIcon field="dueDate" /></th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-task>
+            <tr
+              class="nf-task-row"
+              role="button"
+              tabindex="0"
+              aria-label="Open task details"
+              (click)="openTaskDetails(task)"
+              (keydown.enter)="openTaskDetails(task)"
+              (keydown.space)="openTaskDetails(task); $event.preventDefault()"
+            >
+              <td>
+                <div class="nf-task-title">
+                  <strong>{{ task.title || 'Untitled task' }}</strong>
+                  @if (task.description) {
+                    <span>{{ task.description }}</span>
+                  }
+                </div>
+              </td>
+              <td><p-tag [value]="getTaskStatusLabel(task.status)" [severity]="getStatusSeverity(task.status)" /></td>
+              <td><p-tag [value]="getPriorityLabel(task.priority)" [severity]="getPrioritySeverity(task.priority)" /></td>
+              <td>{{ task.assignedUserLogin || '-' }}</td>
+              <td>{{ task.dueDate || '-' }}</td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="5">
+                <jhi-state-panel title="No tasks yet" description="Create the first task for this project.">
+                  <p-button
+                    label="Create task"
+                    icon="pi pi-plus"
+                    [disabled]="project()?.status === 'ARCHIVED'"
+                    (onClick)="openTaskDialog()"
+                  />
+                </jhi-state-panel>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </jhi-section-panel>
+  </div>
+}
+
+@if (getProjectId() !== null) {
+  <jhi-create-task-dialog
+    [visible]="taskDialogOpen()"
+    [projectId]="getProjectId()!"
+    (closed)="closeTaskDialog()"
+    (created)="onTaskCreated()"
+  />
+}
+
+<jhi-edit-project-dialog
+  [visible]="editProjectDialogOpen()"
+  [project]="project()"
+  (closed)="closeEditProjectDialog()"
+  (updated)="onProjectUpdated($event)"
+/>
+
+<jhi-task-detail-drawer
+  [visible]="taskDetailDrawerOpen()"
+  [task]="selectedTask()"
+  [projectArchived]="project()?.status === 'ARCHIVED'"
+  (closed)="closeTaskDetails()"
+  (taskUpdated)="onDrawerTaskUpdated($event)"
+  (taskDeleted)="onDrawerTaskDeleted()"
+/>

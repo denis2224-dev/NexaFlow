@@ -186,6 +186,13 @@
   display: none;
 }
 
+.nf-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .nf-user-pill {
   display: flex;
   align-items: center;
@@ -305,5 +312,22 @@
 
   .nf-user-pill__copy {
     display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .nf-topbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-block: 0.8rem;
+  }
+
+  .nf-topbar__right {
+    width: 100%;
+  }
+
+  .nf-topbar__right jhi-active-organization-selector {
+    flex: 1;
   }
 }

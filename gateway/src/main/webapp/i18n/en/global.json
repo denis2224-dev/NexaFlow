@@ -32,6 +32,13 @@
         "database": "Database",
         "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
       },
+      "app": {
+        "dashboard": "Dashboard",
+        "organizations": "Organizations",
+        "profile": "Profile",
+        "projects": "Projects",
+        "projectDetails": "Project details"
+      },
       "language": "Language"
     },
     "form": {

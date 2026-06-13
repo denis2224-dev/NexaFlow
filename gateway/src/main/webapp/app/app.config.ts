@@ -14,7 +14,10 @@ import {
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap/datepicker';
+import Aura from '@primeuix/themes/aura';
 import { environment } from 'environments/environment';
+import { MessageService } from 'primeng/api';
+import { providePrimeNG } from 'primeng/config';
 
 import { authExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { authInterceptor } from 'app/core/interceptor/auth.interceptor';
@@ -50,11 +53,13 @@ if (environment.DEBUG_INFO_ENABLED) {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, ...routerFeatures),
+    providePrimeNG({ theme: { preset: Aura } }),
     // Set this to true to enable service worker (PWA)
     provideServiceWorker('ngsw-worker.js', { enabled: false }),
     importProvidersFrom(TranslationModule),
     provideHttpClient(withInterceptors([authInterceptor, authExpiredInterceptor, errorHandlerInterceptor, notificationInterceptor])),
     Title,
+    MessageService,
     { provide: LOCALE_ID, useValue: 'en' },
     { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
     { provide: TitleStrategy, useClass: AppPageTitleStrategy },

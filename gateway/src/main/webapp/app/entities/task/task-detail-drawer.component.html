@@ -1,0 +1,165 @@
+<p-drawer
+  [visible]="visible()"
+  position="right"
+  [modal]="true"
+  [blockScroll]="true"
+  styleClass="nf-task-drawer"
+  [style]="{ width: 'min(38rem, 100vw)' }"
+  (visibleChange)="onVisibleChange($event)"
+>
+  @if (currentTask(); as task) {
+    <div class="nf-task-drawer__content">
+      <header class="nf-task-drawer__header">
+        <div>
+          <span>Task details</span>
+          <h2>{{ task.title || 'Untitled task' }}</h2>
+        </div>
+        <div class="nf-task-drawer__tags">
+          <p-tag [value]="getStatusLabel(task.status)" [severity]="getStatusSeverity(task.status)" />
+          <p-tag [value]="getPriorityLabel(task.priority)" [severity]="getPrioritySeverity(task.priority)" />
+        </div>
+      </header>
+
+      <section class="nf-drawer-section">
+        <h3>Overview</h3>
+        @if (task.description) {
+          <p class="nf-task-description">{{ task.description }}</p>
+        } @else {
+          <p class="nf-muted">No description provided.</p>
+        }
+      </section>
+
+      <section class="nf-drawer-section">
+        <h3>Details</h3>
+        <div class="nf-detail-grid">
+          <div>
+            <span>Status</span>
+            <select
+              class="nf-field"
+              [value]="task.status"
+              [disabled]="projectArchived() || updatingStatus()"
+              (change)="changeStatus($any($event.target).value)"
+            >
+              @for (status of taskStatuses; track status) {
+                <option [value]="status">{{ getStatusLabel(status) }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <span>Priority</span>
+            <strong>{{ getPriorityLabel(task.priority) }}</strong>
+          </div>
+          <div>
+            <span>Assigned</span>
+            <strong>{{ task.assignedUserLogin || 'Unassigned' }}</strong>
+          </div>
+          <div>
+            <span>Due date</span>
+            <strong>{{ task.dueDate || '-' }}</strong>
+          </div>
+          <div>
+            <span>Created by</span>
+            <strong>{{ task.createdBy || '-' }}</strong>
+          </div>
+          <div>
+            <span>Created</span>
+            <strong>{{ task.createdAt ? (task.createdAt | date: 'medium') : '-' }}</strong>
+          </div>
+          <div>
+            <span>Updated</span>
+            <strong>{{ task.updatedAt ? (task.updatedAt | date: 'medium') : '-' }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="nf-drawer-section">
+        <h3>Assignment</h3>
+        <form class="nf-inline-form" [formGroup]="assignForm" (ngSubmit)="assignTask()">
+          <label>
+            <span>User login</span>
+            <input class="nf-field" type="text" formControlName="assignedUserLogin" placeholder="alex" autocomplete="off" />
+          </label>
+          <div class="nf-inline-form__actions">
+            <p-button label="Assign" type="submit" [disabled]="projectArchived() || assignForm.invalid" />
+            <p-button
+              label="Clear assignment"
+              severity="secondary"
+              [outlined]="true"
+              type="button"
+              [disabled]="projectArchived() || !task.assignedUserLogin"
+              (onClick)="unassignTask()"
+            />
+          </div>
+        </form>
+      </section>
+
+      <section class="nf-drawer-section">
+        <div class="nf-section-heading">
+          <h3>Comments</h3>
+          <p-button
+            label="Refresh"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            [disabled]="isCommentsLoading()"
+            (onClick)="loadComments()"
+          />
+        </div>
+
+        @if (isCommentsLoading()) {
+          <jhi-state-panel tone="loading" title="Loading comments" description="Fetching task comments." />
+        } @else if (commentsErrorMessage()) {
+          <jhi-state-panel tone="error" title="Comments unavailable" [description]="commentsErrorMessage()!" />
+        } @else if (comments().length === 0) {
+          <jhi-state-panel title="No comments yet" description="Add the first comment for this task." />
+        } @else {
+          <div class="nf-comment-list">
+            @for (comment of comments(); track comment.id) {
+              <article class="nf-comment">
+                <header>
+                  <strong>{{ comment.authorLogin || 'Unknown user' }}</strong>
+                  <span>{{ comment.createdAt | date: 'medium' }}</span>
+                </header>
+                <p>{{ comment.content }}</p>
+              </article>
+            }
+          </div>
+        }
+
+        <form class="nf-comment-form" [formGroup]="commentForm" (ngSubmit)="addComment()">
+          <label>
+            <span>Add comment</span>
+            <textarea class="nf-field" formControlName="content" rows="3" placeholder="Write a comment"></textarea>
+          </label>
+          <p-button
+            label="Add comment"
+            type="submit"
+            [loading]="isCommentSaving()"
+            [disabled]="projectArchived() || commentForm.invalid || isCommentSaving()"
+          />
+        </form>
+      </section>
+
+      <section class="nf-drawer-section nf-drawer-actions">
+        <h3>Actions</h3>
+        <div>
+          <p-button
+            label="Edit task"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="projectArchived()"
+            (onClick)="openEditTaskDialog()"
+          />
+          <p-button label="Delete task" severity="danger" [outlined]="true" [disabled]="projectArchived()" (onClick)="deleteTask()" />
+        </div>
+      </section>
+    </div>
+  }
+</p-drawer>
+
+<jhi-edit-task-dialog
+  [visible]="editTaskDialogOpen()"
+  [task]="currentTask()"
+  (closed)="closeEditTaskDialog()"
+  (updated)="onTaskEdited($event)"
+/>

@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { finalize } from 'rxjs';
 
+import { ActiveOrganizationService } from 'app/core/nexaflow/active-organization.service';
 import { InvitationService } from 'app/core/nexaflow/invitation.service';
 import { MembershipService } from 'app/core/nexaflow/membership.service';
 import { extractNexaFlowErrorMessage } from 'app/core/nexaflow/nexaflow-error.util';
@@ -65,6 +66,7 @@ export default class Organizations implements OnInit {
   private readonly workspaceService = inject(WorkspaceService);
   private readonly invitationService = inject(InvitationService);
   private readonly membershipService = inject(MembershipService);
+  private readonly activeOrganizationService = inject(ActiveOrganizationService);
 
   ngOnInit(): void {
     this.loadWorkspaces();
@@ -113,6 +115,7 @@ export default class Organizations implements OnInit {
         next: () => {
           this.acceptDialogOpen.set(false);
           this.successMessage.set('Invitation accepted.');
+          this.activeOrganizationService.refreshOrganizations();
           this.loadWorkspaces();
         },
         error: error => {
@@ -332,6 +335,7 @@ export default class Organizations implements OnInit {
         next: () => {
           this.createDialogOpen.set(false);
           this.successMessage.set('Workspace created.');
+          this.activeOrganizationService.refreshOrganizations();
           this.loadWorkspaces();
         },
         error: error => this.errorMessage.set(this.extractErrorMessage(error, 'Workspace could not be created.')),

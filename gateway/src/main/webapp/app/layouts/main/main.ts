@@ -67,7 +67,7 @@ export default class Main implements OnInit {
   }
 
   private syncShellRoute(url: string): void {
-    this.isAppShellRoute.set(url === '/app' || url.startsWith('/app/'));
+    this.isAppShellRoute.set(url === '/app' || url.startsWith('/app/') || url === '/projects' || url.startsWith('/projects/'));
     this.isFullViewportRoute.set(
       this.isAppShellRoute() ||
         url === '/' ||
