@@ -1,12 +1,12 @@
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
-name: billingservice
+name: billing-service
 services:
   postgresql:
     image: postgres:18.4
     # volumes:
-    #   - ~/volumes/jhipster/BillingService/postgresql/:/var/lib/postgresql/data/
+    #   - ~/volumes/jhipster/billing-service/postgresql/:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_USER=BillingService
+      - POSTGRES_USER=billing-service
       - POSTGRES_HOST_AUTH_METHOD=trust
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER}']

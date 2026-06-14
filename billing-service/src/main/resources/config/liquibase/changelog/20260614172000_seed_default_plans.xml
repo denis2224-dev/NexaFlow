@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260614172000-1" author="codex">
+        <sql dbms="postgresql">
+            INSERT INTO plan (
+                id,
+                code,
+                name,
+                price_monthly,
+                max_projects,
+                max_users,
+                max_tasks,
+                active,
+                created_at,
+                updated_at
+            )
+            VALUES
+                (nextval('sequence_generator'), 'FREE', 'Free', 0.00, 3, 5, 50, true, NOW(), NOW()),
+                (nextval('sequence_generator'), 'PRO', 'Pro', 19.00, 25, 25, 1000, true, NOW(), NOW()),
+                (nextval('sequence_generator'), 'ENTERPRISE', 'Enterprise', 99.00, 100000, 100000, 100000, true, NOW(), NOW())
+            ON CONFLICT (code) DO UPDATE
+            SET
+                name = EXCLUDED.name,
+                price_monthly = EXCLUDED.price_monthly,
+                max_projects = EXCLUDED.max_projects,
+                max_users = EXCLUDED.max_users,
+                max_tasks = EXCLUDED.max_tasks,
+                active = EXCLUDED.active,
+                updated_at = NOW();
+        </sql>
+    </changeSet>
+</databaseChangeLog>
