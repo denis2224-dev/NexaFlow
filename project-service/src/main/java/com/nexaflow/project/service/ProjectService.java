@@ -1,5 +1,6 @@
 package com.nexaflow.project.service;
 
+import com.nexaflow.project.client.dto.BillingFeature;
 import com.nexaflow.project.domain.Project;
 import com.nexaflow.project.domain.enumeration.ActivityAction;
 import com.nexaflow.project.domain.enumeration.ActivityEntityType;
@@ -39,6 +40,7 @@ public class ProjectService {
     private final CommentRepository commentRepository;
     private final ProjectMapper projectMapper;
     private final OrganizationAccessService organizationAccessService;
+    private final BillingAccessService billingAccessService;
     private final ActivityLogService activityLogService;
 
     public ProjectService(
@@ -47,6 +49,7 @@ public class ProjectService {
         CommentRepository commentRepository,
         ProjectMapper projectMapper,
         OrganizationAccessService organizationAccessService,
+        BillingAccessService billingAccessService,
         ActivityLogService activityLogService
     ) {
         this.projectRepository = projectRepository;
@@ -54,12 +57,14 @@ public class ProjectService {
         this.commentRepository = commentRepository;
         this.projectMapper = projectMapper;
         this.organizationAccessService = organizationAccessService;
+        this.billingAccessService = billingAccessService;
         this.activityLogService = activityLogService;
     }
 
     public ProjectDTO create(Long organizationId, CreateProjectRequest request) {
         LOG.debug("Request to create Project in organization {} : {}", organizationId, request);
         organizationAccessService.assertMember(organizationId);
+        billingAccessService.assertAllowed(organizationId, BillingFeature.PROJECTS, 1);
 
         Project project = new Project();
         project.setOrganizationId(organizationId);

@@ -1,5 +1,6 @@
 package com.nexaflow.userservice.service;
 
+import com.nexaflow.userservice.client.dto.BillingFeature;
 import com.nexaflow.userservice.domain.Invitation;
 import com.nexaflow.userservice.domain.Membership;
 import com.nexaflow.userservice.domain.Organization;
@@ -35,15 +36,18 @@ public class WorkspaceService {
     private final OrganizationRepository organizationRepository;
     private final MembershipRepository membershipRepository;
     private final InvitationRepository invitationRepository;
+    private final BillingAccessService billingAccessService;
 
     public WorkspaceService(
         OrganizationRepository organizationRepository,
         MembershipRepository membershipRepository,
-        InvitationRepository invitationRepository
+        InvitationRepository invitationRepository,
+        BillingAccessService billingAccessService
     ) {
         this.organizationRepository = organizationRepository;
         this.membershipRepository = membershipRepository;
         this.invitationRepository = invitationRepository;
+        this.billingAccessService = billingAccessService;
     }
 
     public WorkspaceDTO createWorkspace(CreateWorkspaceRequest request) {
@@ -161,6 +165,8 @@ public class WorkspaceService {
         Organization organization = organizationRepository
             .findById(organizationId)
             .orElseThrow(() -> new BadRequestAlertException("Workspace not found", ENTITY_NAME, "notfound"));
+
+        billingAccessService.assertAllowed(organizationId, BillingFeature.USERS, 1);
 
         Invitation invitation = new Invitation();
         invitation.setOrganization(organization);

@@ -1,5 +1,6 @@
 package com.nexaflow.project.service;
 
+import com.nexaflow.project.client.dto.BillingFeature;
 import com.nexaflow.project.domain.Project;
 import com.nexaflow.project.domain.Task;
 import com.nexaflow.project.domain.enumeration.ActivityAction;
@@ -43,6 +44,7 @@ public class TaskService {
     private final CommentRepository commentRepository;
     private final TaskMapper taskMapper;
     private final OrganizationAccessService organizationAccessService;
+    private final BillingAccessService billingAccessService;
     private final ActivityLogService activityLogService;
 
     public TaskService(
@@ -51,6 +53,7 @@ public class TaskService {
         CommentRepository commentRepository,
         TaskMapper taskMapper,
         OrganizationAccessService organizationAccessService,
+        BillingAccessService billingAccessService,
         ActivityLogService activityLogService
     ) {
         this.taskRepository = taskRepository;
@@ -58,6 +61,7 @@ public class TaskService {
         this.commentRepository = commentRepository;
         this.taskMapper = taskMapper;
         this.organizationAccessService = organizationAccessService;
+        this.billingAccessService = billingAccessService;
         this.activityLogService = activityLogService;
     }
 
@@ -65,6 +69,7 @@ public class TaskService {
         LOG.debug("Request to create Task : {}", request);
         Project project = projectRepository.findById(request.projectId()).orElseThrow(() -> new AccessDeniedException("Project not found"));
         organizationAccessService.assertMember(project.getOrganizationId());
+        billingAccessService.assertAllowed(project.getOrganizationId(), BillingFeature.TASKS, 1);
         assertProjectNotArchived(project);
         organizationAccessService.assertUserIsMember(project.getOrganizationId(), request.assignedUserLogin());
 
