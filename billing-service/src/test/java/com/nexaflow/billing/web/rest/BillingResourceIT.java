@@ -9,6 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.nexaflow.billing.client.ProjectUsageClient;
 import com.nexaflow.billing.client.UserUsageClient;
+import com.nexaflow.billing.client.WorkspaceClient;
+import com.nexaflow.billing.client.dto.CurrentMembershipDTO;
+import com.nexaflow.billing.client.dto.MembershipRole;
 import com.nexaflow.billing.client.dto.ProjectUsageDTO;
 import com.nexaflow.billing.client.dto.UserUsageDTO;
 import com.nexaflow.billing.IntegrationTest;
@@ -16,8 +19,12 @@ import com.nexaflow.billing.domain.Plan;
 import com.nexaflow.billing.domain.enumeration.PlanCode;
 import com.nexaflow.billing.repository.PlanRepository;
 import com.nexaflow.billing.repository.SubscriptionRepository;
+import feign.FeignException;
+import feign.Request;
+import java.nio.charset.StandardCharsets;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,12 +57,51 @@ class BillingResourceIT {
     @MockitoBean
     private UserUsageClient userUsageClient;
 
+    @MockitoBean
+    private WorkspaceClient workspaceClient;
+
     @BeforeEach
     void initTest() {
         subscriptionRepository.deleteAll();
         planRepository.deleteAll();
         when(projectUsageClient.getUsage(ORGANIZATION_ID)).thenReturn(new ProjectUsageDTO(ORGANIZATION_ID, 2, 17));
         when(userUsageClient.getUsage(ORGANIZATION_ID)).thenReturn(new UserUsageDTO(ORGANIZATION_ID, 4));
+        when(workspaceClient.getCurrentMembership(ORGANIZATION_ID)).thenReturn(
+            new CurrentMembershipDTO(ORGANIZATION_ID, MembershipRole.OWNER)
+        );
+    }
+
+    @Test
+    @Transactional
+    void organizationScopedEndpointsRejectNonMembers() throws Exception {
+        when(workspaceClient.getCurrentMembership(ORGANIZATION_ID)).thenThrow(
+            new FeignException.Forbidden(
+                "Forbidden",
+                Request.create(
+                    Request.HttpMethod.GET,
+                    "/api/workspaces/" + ORGANIZATION_ID + "/membership/me",
+                    Map.of(),
+                    null,
+                    StandardCharsets.UTF_8,
+                    null
+                ),
+                null,
+                Map.of()
+            )
+        );
+
+        restBillingMockMvc
+            .perform(get("/api/billing/usage").param("organizationId", String.valueOf(ORGANIZATION_ID)))
+            .andExpect(status().isForbidden());
+
+        restBillingMockMvc
+            .perform(
+                get("/api/internal/billing/access/check")
+                    .param("organizationId", String.valueOf(ORGANIZATION_ID))
+                    .param("feature", "PROJECTS")
+                    .param("requestedAmount", "1")
+            )
+            .andExpect(status().isForbidden());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.nexaflow.billing.web.rest;
 
+import com.nexaflow.billing.security.OrganizationAccessService;
 import com.nexaflow.billing.service.BillingApplicationService;
 import com.nexaflow.billing.service.dto.*;
 import jakarta.validation.Valid;
@@ -16,9 +17,11 @@ import tech.jhipster.web.util.ResponseUtil;
 public class BillingResource {
 
     private final BillingApplicationService billingApplicationService;
+    private final OrganizationAccessService organizationAccessService;
 
-    public BillingResource(BillingApplicationService billingApplicationService) {
+    public BillingResource(BillingApplicationService billingApplicationService, OrganizationAccessService organizationAccessService) {
         this.billingApplicationService = billingApplicationService;
+        this.organizationAccessService = organizationAccessService;
     }
 
     @GetMapping("/plans")
@@ -28,21 +31,25 @@ public class BillingResource {
 
     @GetMapping("/subscription/my")
     public ResponseEntity<SubscriptionDTO> getMySubscription(@RequestParam @Min(1) Long organizationId) {
+        organizationAccessService.assertMember(organizationId);
         return ResponseUtil.wrapOrNotFound(billingApplicationService.getCurrentSubscription(organizationId));
     }
 
     @PostMapping("/subscription/activate")
     public ResponseEntity<SubscriptionDTO> activateSubscription(@Valid @RequestBody ActivateSubscriptionRequest request) {
+        organizationAccessService.assertMember(request.organizationId());
         return ResponseEntity.ok(billingApplicationService.activateSubscription(request));
     }
 
     @PostMapping("/subscription/cancel")
     public ResponseEntity<SubscriptionDTO> cancelSubscription(@Valid @RequestBody CancelSubscriptionRequest request) {
+        organizationAccessService.assertMember(request.organizationId());
         return ResponseEntity.ok(billingApplicationService.cancelSubscription(request));
     }
 
     @GetMapping("/usage")
     public ResponseEntity<BillingUsageDTO> getUsage(@RequestParam @Min(1) Long organizationId) {
+        organizationAccessService.assertMember(organizationId);
         return ResponseEntity.ok(billingApplicationService.getUsage(organizationId));
     }
 }

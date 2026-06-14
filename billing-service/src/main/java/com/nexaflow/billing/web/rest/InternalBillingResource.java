@@ -1,5 +1,6 @@
 package com.nexaflow.billing.web.rest;
 
+import com.nexaflow.billing.security.OrganizationAccessService;
 import com.nexaflow.billing.service.BillingApplicationService;
 import com.nexaflow.billing.service.dto.AccessCheckDTO;
 import com.nexaflow.billing.service.dto.BillingFeature;
@@ -14,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class InternalBillingResource {
 
     private final BillingApplicationService billingApplicationService;
+    private final OrganizationAccessService organizationAccessService;
 
-    public InternalBillingResource(BillingApplicationService billingApplicationService) {
+    public InternalBillingResource(BillingApplicationService billingApplicationService, OrganizationAccessService organizationAccessService) {
         this.billingApplicationService = billingApplicationService;
+        this.organizationAccessService = organizationAccessService;
     }
 
     @GetMapping("/access/check")
@@ -25,6 +28,7 @@ public class InternalBillingResource {
         @RequestParam BillingFeature feature,
         @RequestParam(defaultValue = "1") @Min(1) int requestedAmount
     ) {
+        organizationAccessService.assertMember(organizationId);
         return ResponseEntity.ok(billingApplicationService.checkAccess(organizationId, feature, requestedAmount));
     }
 }
