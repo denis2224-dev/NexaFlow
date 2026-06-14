@@ -1,6 +1,7 @@
 package com.nexaflow.billing.web.rest;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,7 +17,9 @@ import com.nexaflow.billing.client.dto.ProjectUsageDTO;
 import com.nexaflow.billing.client.dto.UserUsageDTO;
 import com.nexaflow.billing.IntegrationTest;
 import com.nexaflow.billing.domain.Plan;
+import com.nexaflow.billing.domain.Subscription;
 import com.nexaflow.billing.domain.enumeration.PlanCode;
+import com.nexaflow.billing.domain.enumeration.SubscriptionStatus;
 import com.nexaflow.billing.repository.PlanRepository;
 import com.nexaflow.billing.repository.SubscriptionRepository;
 import feign.FeignException;
@@ -34,6 +37,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @IntegrationTest
 @AutoConfigureMockMvc
@@ -117,6 +121,15 @@ class BillingResourceIT {
             .andExpect(jsonPath("$", hasSize(2)))
             .andExpect(jsonPath("$.[0].code").value("FREE"))
             .andExpect(jsonPath("$.[1].code").value("PRO"));
+    }
+
+    @Test
+    void databaseRejectsMultipleActiveSubscriptionsForSameOrganization() {
+        subscriptionRepository.saveAndFlush(defaultSubscription(ORGANIZATION_ID, PlanCode.FREE, SubscriptionStatus.ACTIVE));
+
+        assertThatThrownBy(() ->
+            subscriptionRepository.saveAndFlush(defaultSubscription(ORGANIZATION_ID, PlanCode.PRO, SubscriptionStatus.ACTIVE))
+        ).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -230,6 +243,17 @@ class BillingResourceIT {
             .maxUsers(maxUsers)
             .maxTasks(maxTasks)
             .active(active)
+            .createdAt(now)
+            .updatedAt(now);
+    }
+
+    private static Subscription defaultSubscription(Long organizationId, PlanCode planCode, SubscriptionStatus status) {
+        Instant now = Instant.now();
+        return new Subscription()
+            .organizationId(organizationId)
+            .planCode(planCode)
+            .status(status)
+            .startedAt(now)
             .createdAt(now)
             .updatedAt(now);
     }

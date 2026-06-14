@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260614204000-1" author="codex">
+        <sql dbms="postgresql">
+            CREATE UNIQUE INDEX ux_subscription_one_active_per_org
+            ON subscription (organization_id)
+            WHERE status = 'ACTIVE'
+        </sql>
+        <rollback>
+            <sql dbms="postgresql">
+                DROP INDEX IF EXISTS ux_subscription_one_active_per_org
+            </sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
