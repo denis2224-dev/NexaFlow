@@ -1,0 +1,147 @@
+Billing Service Summary
+=======================
+
+This file summarizes the work completed for billing-service from the initial scaffold through the current billing enforcement state.
+
+1. Initial billing-service scaffold
+-----------------------------------
+- Created the new JHipster Spring Boot billing microservice.
+- Generated the base service structure, Maven build, Docker config, Spring config, security config, Liquibase setup, tests, and standard JHipster resources.
+- Fixed the local development PostgreSQL port conflict by moving billing-service DB exposure away from the already-used port.
+- Confirmed the local application startup issue was caused by Docker/PostgreSQL port allocation, not missing generated files.
+
+2. JDL-generated billing domain
+-------------------------------
+- Generated billing entities from JDL:
+  - Plan
+  - Subscription
+- Added the domain, DTOs, mappers, repositories, REST resources, criteria/query services, tests, and Liquibase changelogs produced by JHipster.
+- Added billing plan fields such as code, name, monthly price, project/user/task limits, active flag, and timestamps.
+- Added subscription fields such as organizationId, planCode, status, startedAt, expiresAt, createdBy, createdAt, and updatedAt.
+
+3. Database setup and seed data
+-------------------------------
+- Confirmed billing database configuration:
+  - database name: billing-service
+  - username: billing-service
+  - password configured in application config
+  - local PostgreSQL port adjusted for this service
+- Added default billing plans through Liquibase:
+  - FREE
+  - PRO
+  - ENTERPRISE
+- Default limits added:
+  - FREE: 3 projects, 5 users, 50 tasks
+  - PRO: 25 projects, 25 users, 1000 tasks
+  - ENTERPRISE: very high limits for projects, users, and tasks
+
+4. Public and internal billing APIs
+-----------------------------------
+- Added billing API layer for plan/subscription/usage/access workflows.
+- Implemented:
+  - GET  /api/billing/plans
+  - GET  /api/billing/subscription/my?organizationId={id}
+  - POST /api/billing/subscription/activate
+  - POST /api/billing/subscription/cancel
+  - GET  /api/billing/usage?organizationId={id}
+  - GET  /api/internal/billing/access/check?organizationId={id}&feature={PROJECTS|USERS|TASKS}&requestedAmount=1
+- Added application-level billing service logic for:
+  - listing active plans
+  - activating a plan for an organization
+  - cancelling the active subscription
+  - returning current usage and limits
+  - checking whether a requested action is allowed by the active plan
+
+5. Real usage counting
+----------------------
+- Replaced placeholder usage values with real cross-service usage counts.
+- Added billing Feign clients:
+  - UserUsageClient
+  - ProjectUsageClient
+- Added billing DTOs for usage responses:
+  - UserUsageDTO
+  - ProjectUsageDTO
+- Added internal usage endpoint in user-service:
+  - GET /api/internal/memberships/usage?organizationId={id}
+  - Counts active users/memberships in the organization.
+- Added internal usage endpoint in project-service:
+  - GET /api/internal/projects/usage?organizationId={id}
+  - Counts projects and tasks in the organization.
+- Updated billing usage/access checks so:
+  - PROJECTS uses project-service project count
+  - TASKS uses project-service task count
+  - USERS uses user-service membership count
+- Updated DTOs to use long values for used, limit, and remaining.
+
+6. Organization authorization for billing
+-----------------------------------------
+- Added WorkspaceClient in billing-service to call user-service:
+  - GET /api/workspaces/{organizationId}/membership/me
+- Added billing OrganizationAccessService.
+- Billing now verifies the caller is a member of the organization before allowing organization-scoped billing operations:
+  - viewing current subscription
+  - activating subscription
+  - cancelling subscription
+  - viewing usage
+  - running internal access checks
+- Added test coverage proving non-members receive 403.
+
+7. Preventing duplicate active subscriptions
+--------------------------------------------
+- Added a PostgreSQL partial unique index through Liquibase:
+  - index name: ux_subscription_one_active_per_org
+  - table: subscription
+  - unique column: organization_id
+  - condition: status = 'ACTIVE'
+- This prevents more than one ACTIVE subscription per organization at the database level.
+- Historical CANCELLED and EXPIRED subscriptions are still allowed.
+- Added integration test coverage proving a second active subscription for the same organization is rejected.
+
+8. Billing enforcement in project-service and user-service
+---------------------------------------------------------
+- Added BillingClient Feign clients in project-service and user-service.
+- Added shared DTO shapes in each service:
+  - AccessCheckDTO
+  - BillingFeature
+- Added BillingAccessService in project-service and user-service.
+- project-service now checks billing before increasing usage:
+  - creating a project checks feature PROJECTS
+  - creating a task checks feature TASKS
+- user-service now checks billing before creating an invitation:
+  - inviting a user checks feature USERS
+- The user-seat check is done at invite creation instead of invite acceptance because billing's internal access check verifies the caller is already a member of the organization. An invitee is not a member yet during acceptance.
+- Billing enforcement fails closed if billing-service rejects the action or cannot be reached.
+
+9. Validation performed
+-----------------------
+- billing-service:
+  - compile/test-compile
+  - BillingResourceIT
+  - TechnicalStructureTest
+  - checkstyle
+- project-service:
+  - compile/test-compile
+  - checkstyle
+- user-service:
+  - compile/test-compile
+  - checkstyle
+
+10. Known remaining work
+------------------------
+- Payment/provider integration is not implemented yet.
+- Subscription renewal/expiry workflow is not implemented yet.
+- Gateway-specific integration is not implemented yet.
+- Gateway can later add early blocking for UX, but the real billing enforcement now lives in the services that create resources.
+- TechnicalStructureTest in project-service and user-service still exposes existing service-to-web exception dependencies. This is pre-existing architecture debt and separate from billing functionality.
+
+Important commits
+-----------------
+- 0988836 Add billing service
+- aa638f1 Add billing JDL entities
+- 547c684 Fix billing dev database port
+- 6e4a67d Seed default billing plans
+- d928c8c Add billing subscription APIs
+- ad20c34 Add real billing usage counts
+- eb5fcf7 Authorize billing organization access
+- feacb4f Prevent duplicate active subscriptions
+- 0194e12 Enforce billing limits in services

@@ -35,6 +35,7 @@ export default class AppShell {
     { label: 'Dashboard', route: '/app/dashboard', icon: 'tachometer-alt', exact: true },
     { label: 'Projects', route: '/projects', icon: 'folder-open' },
     { label: 'Organizations', route: '/app/organizations', icon: 'users' },
+    { label: 'Billing', route: '/app/billing', icon: 'database', exact: true },
     { label: 'Profile', route: '/app/profile', icon: 'user', exact: true },
   ];
 
@@ -42,6 +43,9 @@ export default class AppShell {
     const url = this.currentUrl();
     if (url.startsWith('/app/organizations')) {
       return 'Organizations';
+    }
+    if (url.startsWith('/app/billing')) {
+      return 'Billing';
     }
     if (url.startsWith('/projects')) {
       return 'Projects';

@@ -1,0 +1,152 @@
+<p-toast />
+
+<jhi-page-header
+  eyebrow="Billing"
+  title="Billing & Subscription"
+  [description]="
+    workspaceName()
+      ? 'Billing is managed per workspace. Changes here apply to ' + workspaceName() + '.'
+      : 'Billing is managed per workspace. Select a workspace to review its subscription.'
+  "
+>
+  <div class="nf-billing-context">
+    <span>Workspace</span>
+    <strong>{{ workspaceName() || 'None selected' }}</strong>
+  </div>
+</jhi-page-header>
+
+@if (isLoading()) {
+  <jhi-section-panel>
+    <jhi-state-panel tone="loading" title="Loading billing" description="Fetching subscription, usage, and available plans." />
+  </jhi-section-panel>
+} @else if (errorMessage()) {
+  <jhi-section-panel>
+    <jhi-state-panel
+      tone="error"
+      [title]="authorizationError() ? 'Billing access denied' : 'Billing unavailable'"
+      [description]="errorMessage()!"
+    >
+      @if (organizationId() !== null) {
+        <p-button label="Retry" icon="pi pi-refresh" [outlined]="true" (onClick)="loadBilling()" />
+      }
+    </jhi-state-panel>
+  </jhi-section-panel>
+} @else {
+  <div class="nf-billing-grid">
+    <jhi-section-panel title="Current plan" description="The active subscription for the selected workspace.">
+      <div class="nf-current-plan">
+        <div>
+          <div class="nf-plan-heading">
+            <span>{{ currentPlan()?.name || currentPlanCode() }}</span>
+            <p-tag [value]="currentPlanCode()" severity="info" />
+            <p-tag [value]="getStatusLabel(subscription()?.status)" [severity]="getStatusSeverity(subscription()?.status)" />
+            @if (usingDefaultFreePlan()) {
+              <p-tag value="Default FREE option" severity="secondary" />
+            }
+          </div>
+
+          @if (subscription()) {
+            <dl class="nf-plan-meta">
+              <div>
+                <dt>Started</dt>
+                <dd>{{ subscription()!.startedAt | date: 'medium' }}</dd>
+              </div>
+              <div>
+                <dt>Expires</dt>
+                <dd>{{ subscription()!.expiresAt ? (subscription()!.expiresAt | date: 'medium') : 'No expiry set' }}</dd>
+              </div>
+            </dl>
+          } @else {
+            <p class="nf-muted-copy">
+              This workspace has no active subscription record. Activate FREE or another plan below to enable billing-backed limits.
+            </p>
+          }
+        </div>
+
+        <p-button
+          label="Cancel subscription"
+          icon="pi pi-times"
+          severity="danger"
+          [outlined]="true"
+          [disabled]="subscription() === null || isCancelling()"
+          [loading]="isCancelling()"
+          (onClick)="cancelSubscription()"
+        />
+      </div>
+    </jhi-section-panel>
+
+    <jhi-section-panel title="Usage" description="Live usage from project-service and user-service.">
+      @if (usageItems().length > 0) {
+        <div class="nf-usage-grid">
+          @for (item of usageItems(); track trackUsage($index, item)) {
+            <p-card styleClass="nf-usage-card" [class]="'nf-usage-card--' + getUsageSeverity(item.metric)">
+              <div class="nf-usage-card__header">
+                <span>{{ item.label }}</span>
+                <p-tag [value]="getUsagePercent(item.metric) + '%'" [severity]="getUsageSeverity(item.metric)" />
+              </div>
+              <div class="nf-usage-card__count">
+                <strong>{{ item.metric.used }}</strong>
+                <span>/ {{ formatLimit(item.metric.limit) }}</span>
+              </div>
+              <p-progressBar [value]="getUsagePercent(item.metric)" [showValue]="false" />
+              <p>{{ item.metric.remaining }} remaining</p>
+            </p-card>
+          }
+        </div>
+      } @else {
+        <jhi-state-panel
+          title="Usage unavailable"
+          description="Usage is available when the workspace has an active subscription. Activate a plan below to load live limits."
+        />
+      }
+    </jhi-section-panel>
+  </div>
+
+  <jhi-section-panel title="Available plans" description="Switch plans for this workspace. Payment is not connected yet.">
+    @if (plans().length === 0) {
+      <jhi-state-panel tone="error" title="Plans unavailable" description="Billing plans could not be loaded." />
+    } @else {
+      <div class="nf-plan-grid">
+        @for (plan of plans(); track trackPlan($index, plan)) {
+          <p-card styleClass="nf-plan-card" [class.nf-plan-card--current]="isCurrentPlan(plan)">
+            <div class="nf-plan-card__header">
+              <div>
+                <span>{{ plan.name }}</span>
+                <strong>{{ plan.priceMonthly | currency: 'USD' : 'symbol' : '1.0-2' }}<small>/mo</small></strong>
+              </div>
+              <div class="nf-plan-card__tags">
+                <p-tag [value]="plan.code" severity="info" />
+                @if (plan.active) {
+                  <p-tag value="Active" severity="success" />
+                }
+                @if (isCurrentPlan(plan)) {
+                  <p-tag value="Current plan" severity="contrast" />
+                }
+              </div>
+            </div>
+
+            <ul class="nf-plan-limits">
+              <li>
+                <span>Projects</span><strong>{{ formatLimit(plan.maxProjects) }}</strong>
+              </li>
+              <li>
+                <span>Users</span><strong>{{ formatLimit(plan.maxUsers) }}</strong>
+              </li>
+              <li>
+                <span>Tasks</span><strong>{{ formatLimit(plan.maxTasks) }}</strong>
+              </li>
+            </ul>
+
+            <p-button
+              [label]="isCurrentPlan(plan) ? 'Current plan' : 'Switch to plan'"
+              [icon]="isCurrentPlan(plan) ? 'pi pi-check' : 'pi pi-arrow-right'"
+              [disabled]="isCurrentPlan(plan) || isChangingPlan() || !plan.active || organizationId() === null"
+              [loading]="isChangingPlan() && !isCurrentPlan(plan)"
+              (onClick)="switchPlan(plan)"
+            />
+          </p-card>
+        }
+      </div>
+    }
+  </jhi-section-panel>
+}

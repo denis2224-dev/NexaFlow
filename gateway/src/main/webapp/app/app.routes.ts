@@ -45,6 +45,11 @@ const routes: Routes = [
         title: 'global.menu.app.organizations',
       },
       {
+        path: 'billing',
+        loadComponent: () => import('./features/billing/billing'),
+        title: 'Billing & Subscription',
+      },
+      {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile'),
         title: 'global.menu.app.profile',
