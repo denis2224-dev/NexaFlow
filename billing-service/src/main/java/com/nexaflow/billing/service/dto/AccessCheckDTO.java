@@ -5,8 +5,8 @@ public record AccessCheckDTO(
     BillingFeature feature,
     int requestedAmount,
     boolean allowed,
-    int used,
-    int limit,
-    int remaining,
+    long used,
+    long limit,
+    long remaining,
     String reason
 ) {}

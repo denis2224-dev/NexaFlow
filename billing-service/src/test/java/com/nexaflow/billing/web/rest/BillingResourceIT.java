@@ -1,11 +1,16 @@
 package com.nexaflow.billing.web.rest;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.nexaflow.billing.client.ProjectUsageClient;
+import com.nexaflow.billing.client.UserUsageClient;
+import com.nexaflow.billing.client.dto.ProjectUsageDTO;
+import com.nexaflow.billing.client.dto.UserUsageDTO;
 import com.nexaflow.billing.IntegrationTest;
 import com.nexaflow.billing.domain.Plan;
 import com.nexaflow.billing.domain.enumeration.PlanCode;
@@ -19,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,10 +44,18 @@ class BillingResourceIT {
     @Autowired
     private SubscriptionRepository subscriptionRepository;
 
+    @MockitoBean
+    private ProjectUsageClient projectUsageClient;
+
+    @MockitoBean
+    private UserUsageClient userUsageClient;
+
     @BeforeEach
     void initTest() {
         subscriptionRepository.deleteAll();
         planRepository.deleteAll();
+        when(projectUsageClient.getUsage(ORGANIZATION_ID)).thenReturn(new ProjectUsageDTO(ORGANIZATION_ID, 2, 17));
+        when(userUsageClient.getUsage(ORGANIZATION_ID)).thenReturn(new UserUsageDTO(ORGANIZATION_ID, 4));
     }
 
     @Test
@@ -93,10 +107,13 @@ class BillingResourceIT {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.organizationId").value(ORGANIZATION_ID))
             .andExpect(jsonPath("$.subscription.planCode").value("PRO"))
-            .andExpect(jsonPath("$.projects.used").value(0))
+            .andExpect(jsonPath("$.projects.used").value(2))
             .andExpect(jsonPath("$.projects.limit").value(25))
-            .andExpect(jsonPath("$.projects.remaining").value(25))
+            .andExpect(jsonPath("$.projects.remaining").value(23))
+            .andExpect(jsonPath("$.users.used").value(4))
             .andExpect(jsonPath("$.users.limit").value(25))
+            .andExpect(jsonPath("$.users.remaining").value(21))
+            .andExpect(jsonPath("$.tasks.used").value(17))
             .andExpect(jsonPath("$.tasks.limit").value(1000));
 
         restBillingMockMvc
@@ -104,19 +121,20 @@ class BillingResourceIT {
                 get("/api/internal/billing/access/check")
                     .param("organizationId", String.valueOf(ORGANIZATION_ID))
                     .param("feature", "USERS")
-                    .param("requestedAmount", "25")
+                    .param("requestedAmount", "21")
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.allowed").value(true))
             .andExpect(jsonPath("$.reason").value("ALLOWED"))
-            .andExpect(jsonPath("$.remaining").value(25));
+            .andExpect(jsonPath("$.used").value(4))
+            .andExpect(jsonPath("$.remaining").value(21));
 
         restBillingMockMvc
             .perform(
                 get("/api/internal/billing/access/check")
                     .param("organizationId", String.valueOf(ORGANIZATION_ID))
                     .param("feature", "USERS")
-                    .param("requestedAmount", "26")
+                    .param("requestedAmount", "22")
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.allowed").value(false))

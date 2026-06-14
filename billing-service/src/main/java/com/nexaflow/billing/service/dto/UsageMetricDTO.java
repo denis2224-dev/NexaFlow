@@ -1,3 +1,3 @@
 package com.nexaflow.billing.service.dto;
 
-public record UsageMetricDTO(int used, int limit, int remaining) {}
+public record UsageMetricDTO(long used, long limit, long remaining) {}

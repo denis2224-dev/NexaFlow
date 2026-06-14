@@ -1,5 +1,7 @@
 package com.nexaflow.billing.service;
 
+import com.nexaflow.billing.client.ProjectUsageClient;
+import com.nexaflow.billing.client.UserUsageClient;
 import com.nexaflow.billing.domain.Plan;
 import com.nexaflow.billing.domain.Subscription;
 import com.nexaflow.billing.domain.enumeration.PlanCode;
@@ -10,7 +12,6 @@ import com.nexaflow.billing.security.SecurityUtils;
 import com.nexaflow.billing.service.dto.*;
 import com.nexaflow.billing.service.mapper.PlanMapper;
 import com.nexaflow.billing.service.mapper.SubscriptionMapper;
-import com.nexaflow.billing.web.rest.errors.BadRequestAlertException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -23,23 +24,27 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional
 public class BillingApplicationService {
 
-    private static final String ENTITY_NAME = "billing";
-
     private final PlanRepository planRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final PlanMapper planMapper;
     private final SubscriptionMapper subscriptionMapper;
+    private final UserUsageClient userUsageClient;
+    private final ProjectUsageClient projectUsageClient;
 
     public BillingApplicationService(
         PlanRepository planRepository,
         SubscriptionRepository subscriptionRepository,
         PlanMapper planMapper,
-        SubscriptionMapper subscriptionMapper
+        SubscriptionMapper subscriptionMapper,
+        UserUsageClient userUsageClient,
+        ProjectUsageClient projectUsageClient
     ) {
         this.planRepository = planRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.planMapper = planMapper;
         this.subscriptionMapper = subscriptionMapper;
+        this.userUsageClient = userUsageClient;
+        this.projectUsageClient = projectUsageClient;
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +61,7 @@ public class BillingApplicationService {
         Instant now = Instant.now();
         Plan plan = planRepository
             .findByCodeAndActiveTrue(request.planCode())
-            .orElseThrow(() -> new BadRequestAlertException("Plan is not active", ENTITY_NAME, "plannotactive"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Plan is not active"));
 
         findActiveSubscriptions(request.organizationId(), now).forEach(subscription -> {
             subscription.setStatus(SubscriptionStatus.CANCELLED);
@@ -109,9 +114,9 @@ public class BillingApplicationService {
             return new AccessCheckDTO(organizationId, feature, requestedAmount, false, 0, 0, 0, "PLAN_NOT_ACTIVE");
         }
 
-        int used = getUsedAmount(organizationId, feature);
-        int limit = getLimit(plan.orElseThrow(), feature);
-        int remaining = Math.max(limit - used, 0);
+        long used = getUsedAmount(organizationId, feature);
+        long limit = getLimit(plan.orElseThrow(), feature);
+        long remaining = Math.max(limit - used, 0);
         boolean allowed = requestedAmount <= remaining;
         return new AccessCheckDTO(
             organizationId,
@@ -135,16 +140,20 @@ public class BillingApplicationService {
         );
     }
 
-    private UsageMetricDTO toMetric(Long organizationId, BillingFeature feature, int limit) {
-        int used = getUsedAmount(organizationId, feature);
+    private UsageMetricDTO toMetric(Long organizationId, BillingFeature feature, long limit) {
+        long used = getUsedAmount(organizationId, feature);
         return new UsageMetricDTO(used, limit, Math.max(limit - used, 0));
     }
 
-    private int getUsedAmount(Long organizationId, BillingFeature feature) {
-        return 0;
+    private long getUsedAmount(Long organizationId, BillingFeature feature) {
+        return switch (feature) {
+            case PROJECTS -> projectUsageClient.getUsage(organizationId).projects();
+            case TASKS -> projectUsageClient.getUsage(organizationId).tasks();
+            case USERS -> userUsageClient.getUsage(organizationId).users();
+        };
     }
 
-    private int getLimit(Plan plan, BillingFeature feature) {
+    private long getLimit(Plan plan, BillingFeature feature) {
         return switch (feature) {
             case PROJECTS -> plan.getMaxProjects();
             case USERS -> plan.getMaxUsers();
