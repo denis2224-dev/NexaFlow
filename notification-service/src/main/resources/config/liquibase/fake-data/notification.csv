@@ -1,0 +1,31 @@
+id;organization_id;recipient_login;title;message;type;source_type;source_id;is_read;created_at
+1;13959;palatable mmm spotless;whisper;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;PROJECT;2726;true;2026-06-15T07:21:15
+2;11730;putrefy mid ew;underplay goat;../fake-data/blob/hipster.txt;TASK_ASSIGNED;PROJECT;28936;false;2026-06-15T14:51:23
+3;25318;shyly tighten redound;and properly freely;../fake-data/blob/hipster.txt;SYSTEM;COMMENT;23102;true;2026-06-14T21:05:41
+4;3066;yuck;magnificent minus huzzah;../fake-data/blob/hipster.txt;TASK_ASSIGNED;SYSTEM;23555;false;2026-06-14T18:37:23
+5;31538;separate so;as unlined ah;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;TASK;23141;true;2026-06-14T23:25:34
+6;6815;calculus until polarisation;fort;../fake-data/blob/hipster.txt;PROJECT_UPDATED;PROJECT;11035;false;2026-06-15T13:12:47
+7;12687;which beret;descent barring gee;../fake-data/blob/hipster.txt;INVITATION_ACCEPTED;PROJECT;14256;true;2026-06-15T02:43:33
+8;12355;pish hateful;courtroom even coin;../fake-data/blob/hipster.txt;TASK_ASSIGNED;TASK;3721;true;2026-06-15T03:24:10
+9;32479;derby ha;kookily noisily;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;COMMENT;17087;true;2026-06-15T09:54:01
+10;1777;bulky;kindly simple;../fake-data/blob/hipster.txt;INVITATION_ACCEPTED;SUBSCRIPTION;21031;true;2026-06-14T20:49:59
+11;31829;incidentally utterly ouch;deprave while;../fake-data/blob/hipster.txt;COMMENT_ADDED;PROJECT;10183;false;2026-06-14T16:24:02
+12;24439;fooey ha;when fearless;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;INVITATION;26874;false;2026-06-14T17:35:59
+13;26152;vastly geez;willfully observe out;../fake-data/blob/hipster.txt;SYSTEM;PROJECT;25918;true;2026-06-15T13:31:32
+14;3073;gosh regularly while;fantastic inferior drat;../fake-data/blob/hipster.txt;TASK_ASSIGNED;PROJECT;3026;false;2026-06-15T13:12:54
+15;16426;or middle mmm;once justly;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;PROJECT;17278;true;2026-06-14T19:21:40
+16;32468;athwart through apud;seriously because;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;INVITATION;3361;false;2026-06-15T02:09:22
+17;23583;clamour profane;underpants apud;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;COMMENT;3668;true;2026-06-15T01:10:26
+18;11576;density fen instead;uh-huh during;../fake-data/blob/hipster.txt;PROJECT_UPDATED;SUBSCRIPTION;12063;false;2026-06-15T04:54:18
+19;3814;reborn word;because inasmuch;../fake-data/blob/hipster.txt;COMMENT_ADDED;INVITATION;12501;true;2026-06-15T07:16:29
+20;32588;meh;provision huzzah meh;../fake-data/blob/hipster.txt;INVITATION_ACCEPTED;PROJECT;1466;true;2026-06-15T09:29:26
+21;19953;provided;pleasing jealously;../fake-data/blob/hipster.txt;SYSTEM;SUBSCRIPTION;10238;false;2026-06-15T06:04:10
+22;18707;up euphonium;across restfully after;../fake-data/blob/hipster.txt;TASK_ASSIGNED;INVITATION;27709;true;2026-06-15T06:10:39
+23;17449;emulsify rare;hype;../fake-data/blob/hipster.txt;SYSTEM;SYSTEM;4575;false;2026-06-15T10:17:54
+24;7035;preclude enraged;marten schematise;../fake-data/blob/hipster.txt;COMMENT_ADDED;INVITATION;23601;true;2026-06-15T06:14:14
+25;23596;minus;drain;../fake-data/blob/hipster.txt;PROJECT_UPDATED;SYSTEM;6305;true;2026-06-15T00:29:12
+26;32470;bony especially;everlasting absolve unless;../fake-data/blob/hipster.txt;TASK_ASSIGNED;INVITATION;3478;false;2026-06-14T21:33:10
+27;8370;though forenenst;jealously sheepishly vacantly;../fake-data/blob/hipster.txt;TASK_ASSIGNED;TASK;15098;true;2026-06-15T02:45:55
+28;15610;scarification;ugh;../fake-data/blob/hipster.txt;PROJECT_UPDATED;COMMENT;308;true;2026-06-15T10:55:37
+29;23599;apropos;adjourn;../fake-data/blob/hipster.txt;SUBSCRIPTION_CHANGED;TASK;16318;true;2026-06-15T03:05:26
+30;29340;consequently;animated redraw;../fake-data/blob/hipster.txt;COMMENT_ADDED;SYSTEM;17912;false;2026-06-15T12:54:34

@@ -39,19 +39,22 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final OrganizationAccessService organizationAccessService;
     private final ActivityLogService activityLogService;
+    private final NotificationDispatchService notificationDispatchService;
 
     public CommentService(
         CommentRepository commentRepository,
         TaskRepository taskRepository,
         CommentMapper commentMapper,
         OrganizationAccessService organizationAccessService,
-        ActivityLogService activityLogService
+        ActivityLogService activityLogService,
+        NotificationDispatchService notificationDispatchService
     ) {
         this.commentRepository = commentRepository;
         this.taskRepository = taskRepository;
         this.commentMapper = commentMapper;
         this.organizationAccessService = organizationAccessService;
         this.activityLogService = activityLogService;
+        this.notificationDispatchService = notificationDispatchService;
     }
 
     public CommentDTO addToTask(Long taskId, CreateCommentRequest request) {
@@ -69,6 +72,12 @@ public class CommentService {
 
         comment = commentRepository.save(comment);
         activityLogService.record(comment.getOrganizationId(), ActivityEntityType.TASK, taskId, ActivityAction.COMMENT_ADDED);
+        notificationDispatchService.commentAdded(
+            comment.getOrganizationId(),
+            task.getAssignedUserLogin(),
+            comment.getId(),
+            task.getTitle()
+        );
         return commentMapper.toDto(comment);
     }
 

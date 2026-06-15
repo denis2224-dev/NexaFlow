@@ -46,6 +46,7 @@ public class TaskService {
     private final OrganizationAccessService organizationAccessService;
     private final BillingAccessService billingAccessService;
     private final ActivityLogService activityLogService;
+    private final NotificationDispatchService notificationDispatchService;
 
     public TaskService(
         TaskRepository taskRepository,
@@ -54,7 +55,8 @@ public class TaskService {
         TaskMapper taskMapper,
         OrganizationAccessService organizationAccessService,
         BillingAccessService billingAccessService,
-        ActivityLogService activityLogService
+        ActivityLogService activityLogService,
+        NotificationDispatchService notificationDispatchService
     ) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
@@ -63,6 +65,7 @@ public class TaskService {
         this.organizationAccessService = organizationAccessService;
         this.billingAccessService = billingAccessService;
         this.activityLogService = activityLogService;
+        this.notificationDispatchService = notificationDispatchService;
     }
 
     public TaskDTO create(CreateTaskRequest request) {
@@ -87,6 +90,12 @@ public class TaskService {
 
         task = taskRepository.save(task);
         activityLogService.record(task.getOrganizationId(), ActivityEntityType.TASK, task.getId(), ActivityAction.TASK_CREATED);
+        notificationDispatchService.taskAssigned(
+            task.getOrganizationId(),
+            task.getAssignedUserLogin(),
+            task.getId(),
+            task.getTitle()
+        );
         return taskMapper.toDto(task);
     }
 
@@ -171,6 +180,12 @@ public class TaskService {
         task.setUpdatedAt(Instant.now());
         task = taskRepository.save(task);
         activityLogService.record(task.getOrganizationId(), ActivityEntityType.TASK, task.getId(), ActivityAction.TASK_ASSIGNED);
+        notificationDispatchService.taskAssigned(
+            task.getOrganizationId(),
+            task.getAssignedUserLogin(),
+            task.getId(),
+            task.getTitle()
+        );
         return taskMapper.toDto(task);
     }
 
