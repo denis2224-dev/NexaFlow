@@ -16,6 +16,8 @@
 logging:
   level:
     ROOT: DEBUG
+    java.lang.ProcessBuilder: INFO
+    java.lang.Runtime: INFO
     tech.jhipster: DEBUG
     org.hibernate.SQL: DEBUG
     com.nexaflow.userservice: DEBUG

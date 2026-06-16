@@ -7,6 +7,7 @@ import com.nexaflow.project.client.dto.SourceType;
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,9 +16,11 @@ public class NotificationDispatchService {
     private static final Logger LOG = LoggerFactory.getLogger(NotificationDispatchService.class);
 
     private final NotificationClient notificationClient;
+    private final String internalApiToken;
 
-    public NotificationDispatchService(NotificationClient notificationClient) {
+    public NotificationDispatchService(NotificationClient notificationClient, @Value("${application.internal-api-token:}") String internalApiToken) {
         this.notificationClient = notificationClient;
+        this.internalApiToken = internalApiToken;
     }
 
     public void taskAssigned(Long organizationId, String recipientLogin, Long taskId, String taskTitle) {
@@ -75,7 +78,7 @@ public class NotificationDispatchService {
 
     private void send(CreateNotificationRequest request) {
         try {
-            notificationClient.createNotification(request);
+            notificationClient.createNotification(internalApiToken, request);
         } catch (FeignException ex) {
             LOG.warn("Failed to dispatch notification: {}", request, ex);
         }

@@ -14,6 +14,7 @@ import com.nexaflow.notification.domain.Notification;
 import com.nexaflow.notification.domain.enumeration.NotificationType;
 import com.nexaflow.notification.domain.enumeration.SourceType;
 import com.nexaflow.notification.repository.NotificationRepository;
+import com.nexaflow.notification.security.AuthoritiesConstants;
 import com.nexaflow.notification.service.dto.CreateNotificationRequest;
 import com.nexaflow.notification.service.dto.NotificationDTO;
 import com.nexaflow.notification.service.mapper.NotificationMapper;
@@ -37,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @IntegrationTest
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(username = "user", authorities = AuthoritiesConstants.ADMIN)
 class NotificationResourceIT {
 
     private static final Long DEFAULT_ORGANIZATION_ID = 1L;
@@ -72,6 +73,9 @@ class NotificationResourceIT {
     private static final String ENTITY_API_URL = "/api/notifications";
     private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
     private static final String INTERNAL_ENTITY_API_URL = "/api/internal/notifications";
+    private static final String INTERNAL_TOKEN_HEADER = "X-Internal-Token";
+    private static final String ORGANIZATION_ID_HEADER = "X-Organization-Id";
+    private static final String INTERNAL_TOKEN = "test-internal-notification-token";
     private static final String CURRENT_USER_LOGIN = "user";
     private static final String OTHER_USER_LOGIN = "other-user";
 
@@ -1062,6 +1066,32 @@ class NotificationResourceIT {
 
     @Test
     @Transactional
+    @WithMockUser(username = CURRENT_USER_LOGIN)
+    void generatedCrudEndpointsRequireAdmin() throws Exception {
+        insertedNotification = notificationRepository.saveAndFlush(notification);
+        NotificationDTO notificationDTO = notificationMapper.toDto(notification);
+
+        restNotificationMockMvc.perform(get(ENTITY_API_URL)).andExpect(status().isForbidden());
+        restNotificationMockMvc.perform(get(ENTITY_API_URL + "/count")).andExpect(status().isForbidden());
+        restNotificationMockMvc.perform(get(ENTITY_API_URL_ID, notification.getId())).andExpect(status().isForbidden());
+        restNotificationMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsBytes(notificationDTO)))
+            .andExpect(status().isForbidden());
+        restNotificationMockMvc
+            .perform(put(ENTITY_API_URL_ID, notification.getId()).contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsBytes(notificationDTO)))
+            .andExpect(status().isForbidden());
+        restNotificationMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, notification.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(om.writeValueAsBytes(notificationDTO))
+            )
+            .andExpect(status().isForbidden());
+        restNotificationMockMvc.perform(delete(ENTITY_API_URL_ID, notification.getId())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Transactional
     void getMyNotifications() throws Exception {
         notificationRepository.saveAndFlush(
             createNotificationFor(CURRENT_USER_LOGIN, "older notification", false, DEFAULT_CREATED_AT.plusSeconds(1))
@@ -1080,6 +1110,25 @@ class NotificationResourceIT {
             .andExpect(jsonPath("$.[0].title").value("newer notification"))
             .andExpect(jsonPath("$.[1].recipientLogin").value(CURRENT_USER_LOGIN))
             .andExpect(jsonPath("$.[1].title").value("older notification"));
+    }
+
+    @Test
+    @Transactional
+    void getMyNotificationsFiltersByOrganizationHeader() throws Exception {
+        notificationRepository.saveAndFlush(
+            createNotificationFor(CURRENT_USER_LOGIN, "organization one", false, DEFAULT_CREATED_AT.plusSeconds(1))
+        );
+        notificationRepository.saveAndFlush(
+            createNotificationFor(UPDATED_ORGANIZATION_ID, CURRENT_USER_LOGIN, "organization two", false, DEFAULT_CREATED_AT.plusSeconds(2))
+        );
+
+        restNotificationMockMvc
+            .perform(get(ENTITY_API_URL + "/my").header(ORGANIZATION_ID_HEADER, UPDATED_ORGANIZATION_ID))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$.[0].organizationId").value(UPDATED_ORGANIZATION_ID.intValue()))
+            .andExpect(jsonPath("$.[0].title").value("organization two"));
     }
 
     @Test
@@ -1104,10 +1153,17 @@ class NotificationResourceIT {
     @Transactional
     void countMyUnreadNotifications() throws Exception {
         notificationRepository.saveAndFlush(createNotificationFor(CURRENT_USER_LOGIN, "unread one", false, DEFAULT_CREATED_AT.plusSeconds(1)));
+        notificationRepository.saveAndFlush(
+            createNotificationFor(UPDATED_ORGANIZATION_ID, CURRENT_USER_LOGIN, "unread org two", false, DEFAULT_CREATED_AT.plusSeconds(1))
+        );
         notificationRepository.saveAndFlush(createNotificationFor(CURRENT_USER_LOGIN, "read one", true, DEFAULT_CREATED_AT.plusSeconds(2)));
         notificationRepository.saveAndFlush(createNotificationFor(OTHER_USER_LOGIN, "unread other", false, DEFAULT_CREATED_AT.plusSeconds(3)));
 
-        restNotificationMockMvc.perform(get(ENTITY_API_URL + "/my/unread-count")).andExpect(status().isOk()).andExpect(content().string("1"));
+        restNotificationMockMvc.perform(get(ENTITY_API_URL + "/my/unread-count")).andExpect(status().isOk()).andExpect(content().string("2"));
+        restNotificationMockMvc
+            .perform(get(ENTITY_API_URL + "/my/unread-count").header(ORGANIZATION_ID_HEADER, DEFAULT_ORGANIZATION_ID))
+            .andExpect(status().isOk())
+            .andExpect(content().string("1"));
     }
 
     @Test
@@ -1132,9 +1188,29 @@ class NotificationResourceIT {
             createNotificationFor(OTHER_USER_LOGIN, "other notification", false, DEFAULT_CREATED_AT.plusSeconds(1))
         );
 
-        restNotificationMockMvc.perform(put(ENTITY_API_URL + "/{id}/read", otherUserNotification.getId())).andExpect(status().isBadRequest());
+        restNotificationMockMvc.perform(put(ENTITY_API_URL + "/{id}/read", otherUserNotification.getId())).andExpect(status().isForbidden());
 
         assertThat(notificationRepository.findById(otherUserNotification.getId()).orElseThrow().getIsRead()).isFalse();
+    }
+
+    @Test
+    @Transactional
+    void markNotificationAsReadReturnsNotFoundWhenMissing() throws Exception {
+        restNotificationMockMvc.perform(put(ENTITY_API_URL + "/{id}/read", longCount.incrementAndGet())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Transactional
+    void markNotificationAsReadRejectsDifferentOrganizationHeader() throws Exception {
+        Notification unreadNotification = notificationRepository.saveAndFlush(
+            createNotificationFor(CURRENT_USER_LOGIN, "unread notification", false, DEFAULT_CREATED_AT.plusSeconds(1))
+        );
+
+        restNotificationMockMvc
+            .perform(put(ENTITY_API_URL + "/{id}/read", unreadNotification.getId()).header(ORGANIZATION_ID_HEADER, UPDATED_ORGANIZATION_ID))
+            .andExpect(status().isForbidden());
+
+        assertThat(notificationRepository.findById(unreadNotification.getId()).orElseThrow().getIsRead()).isFalse();
     }
 
     @Test
@@ -1159,20 +1235,36 @@ class NotificationResourceIT {
 
     @Test
     @Transactional
+    void markAllMyNotificationsAsReadFiltersByOrganizationHeader() throws Exception {
+        Notification firstNotification = notificationRepository.saveAndFlush(
+            createNotificationFor(CURRENT_USER_LOGIN, "first unread", false, DEFAULT_CREATED_AT.plusSeconds(1))
+        );
+        Notification secondNotification = notificationRepository.saveAndFlush(
+            createNotificationFor(UPDATED_ORGANIZATION_ID, CURRENT_USER_LOGIN, "second unread", false, DEFAULT_CREATED_AT.plusSeconds(2))
+        );
+
+        restNotificationMockMvc
+            .perform(put(ENTITY_API_URL + "/my/read-all").header(ORGANIZATION_ID_HEADER, UPDATED_ORGANIZATION_ID))
+            .andExpect(status().isNoContent());
+
+        assertThat(notificationRepository.findById(firstNotification.getId()).orElseThrow().getIsRead()).isFalse();
+        assertThat(notificationRepository.findById(secondNotification.getId()).orElseThrow().getIsRead()).isTrue();
+    }
+
+    @Test
+    @Transactional
     void createInternalNotification() throws Exception {
         long databaseSizeBeforeCreate = getRepositoryCount();
-        CreateNotificationRequest request = new CreateNotificationRequest();
-        request.setOrganizationId(DEFAULT_ORGANIZATION_ID);
-        request.setRecipientLogin(CURRENT_USER_LOGIN);
-        request.setTitle(DEFAULT_TITLE);
-        request.setMessage(DEFAULT_MESSAGE);
-        request.setType(DEFAULT_TYPE);
-        request.setSourceType(DEFAULT_SOURCE_TYPE);
-        request.setSourceId(DEFAULT_SOURCE_ID);
+        CreateNotificationRequest request = createInternalNotificationRequest();
 
         var returnedNotificationDTO = om.readValue(
             restNotificationMockMvc
-                .perform(post(INTERNAL_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsBytes(request)))
+                .perform(
+                    post(INTERNAL_ENTITY_API_URL)
+                        .header(INTERNAL_TOKEN_HEADER, INTERNAL_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsBytes(request))
+                )
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -1187,6 +1279,31 @@ class NotificationResourceIT {
         assertThat(persistedNotification.getCreatedAt()).isNotNull();
 
         insertedNotification = persistedNotification;
+    }
+
+    @Test
+    @Transactional
+    void createInternalNotificationRejectsMissingToken() throws Exception {
+        CreateNotificationRequest request = createInternalNotificationRequest();
+
+        restNotificationMockMvc
+            .perform(post(INTERNAL_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsBytes(request)))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Transactional
+    void createInternalNotificationRejectsWrongToken() throws Exception {
+        CreateNotificationRequest request = createInternalNotificationRequest();
+
+        restNotificationMockMvc
+            .perform(
+                post(INTERNAL_ENTITY_API_URL)
+                    .header(INTERNAL_TOKEN_HEADER, "wrong-token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(om.writeValueAsBytes(request))
+            )
+            .andExpect(status().isForbidden());
     }
 
     protected long getRepositoryCount() {
@@ -1218,8 +1335,18 @@ class NotificationResourceIT {
     }
 
     private static Notification createNotificationFor(String recipientLogin, String title, boolean isRead, Instant createdAt) {
+        return createNotificationFor(DEFAULT_ORGANIZATION_ID, recipientLogin, title, isRead, createdAt);
+    }
+
+    private static Notification createNotificationFor(
+        Long organizationId,
+        String recipientLogin,
+        String title,
+        boolean isRead,
+        Instant createdAt
+    ) {
         return new Notification()
-            .organizationId(DEFAULT_ORGANIZATION_ID)
+            .organizationId(organizationId)
             .recipientLogin(recipientLogin)
             .title(title)
             .message(DEFAULT_MESSAGE)
@@ -1228,5 +1355,17 @@ class NotificationResourceIT {
             .sourceId(DEFAULT_SOURCE_ID)
             .isRead(isRead)
             .createdAt(createdAt);
+    }
+
+    private static CreateNotificationRequest createInternalNotificationRequest() {
+        CreateNotificationRequest request = new CreateNotificationRequest();
+        request.setOrganizationId(DEFAULT_ORGANIZATION_ID);
+        request.setRecipientLogin(CURRENT_USER_LOGIN);
+        request.setTitle(DEFAULT_TITLE);
+        request.setMessage(DEFAULT_MESSAGE);
+        request.setType(DEFAULT_TYPE);
+        request.setSourceType(DEFAULT_SOURCE_TYPE);
+        request.setSourceId(DEFAULT_SOURCE_ID);
+        return request;
     }
 }

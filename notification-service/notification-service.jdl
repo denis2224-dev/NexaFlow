@@ -1,0 +1,42 @@
+enum NotificationType {
+  TASK_ASSIGNED,
+  COMMENT_ADDED,
+  PROJECT_UPDATED,
+  INVITATION_ACCEPTED,
+  SUBSCRIPTION_CHANGED,
+  SYSTEM
+}
+
+enum SourceType {
+  PROJECT,
+  TASK,
+  COMMENT,
+  INVITATION,
+  SUBSCRIPTION,
+  SYSTEM
+}
+
+entity Notification {
+  organizationId Long required
+
+  recipientLogin String required maxlength(100)
+
+  title String required maxlength(255)
+
+  message TextBlob required
+
+  type NotificationType required
+
+  sourceType SourceType
+
+  sourceId Long
+
+  isRead Boolean required
+
+  createdAt Instant required
+}
+
+dto Notification with mapstruct
+service Notification with serviceClass
+paginate Notification with pagination
+filter Notification

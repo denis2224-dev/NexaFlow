@@ -182,20 +182,20 @@ You can run a Sonar analysis with using the [sonar-scanner](https://docs.sonarqu
 Then, run a Sonar analysis:
 
 ```bash
-./mvnw -Pprod clean verify sonar:sonar -Dsonar.login=admin -Dsonar.password=admin
+./mvnw -Pprod clean verify sonar:sonar -Dsonar.login="$SONAR_LOGIN" -Dsonar.password="$SONAR_PASSWORD"
 ```
 
 If you need to re-run the Sonar phase, please be sure to specify at least the `initialize` phase since Sonar properties are loaded from the sonar-project.properties file.
 
 ```bash
-./mvnw initialize sonar:sonar -Dsonar.login=admin -Dsonar.password=admin
+./mvnw initialize sonar:sonar -Dsonar.login="$SONAR_LOGIN" -Dsonar.password="$SONAR_PASSWORD"
 ```
 
 Additionally, Instead of passing `sonar.password` and `sonar.login` as CLI arguments, these parameters can be configured from [sonar-project.properties](sonar-project.properties) as shown below:
 
 ```bash
-sonar.login=admin
-sonar.password=admin
+sonar.login=${env.SONAR_LOGIN}
+sonar.password=${env.SONAR_PASSWORD}
 ```
 
 For more information, refer to the [Code quality page][].

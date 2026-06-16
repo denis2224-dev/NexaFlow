@@ -1,5 +1,6 @@
 package com.nexaflow.notification.web.rest;
 
+import com.nexaflow.notification.security.AuthoritiesConstants;
 import com.nexaflow.notification.repository.NotificationRepository;
 import com.nexaflow.notification.service.NotificationQueryService;
 import com.nexaflow.notification.service.NotificationService;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
@@ -36,6 +38,7 @@ public class NotificationResource {
     private static final Logger LOG = LoggerFactory.getLogger(NotificationResource.class);
 
     private static final String ENTITY_NAME = "notificationServiceNotification";
+    private static final String ORGANIZATION_ID_HEADER = "X-Organization-Id";
 
     @Value("${jhipster.clientApp.name:notificationservice}")
     private String applicationName;
@@ -64,6 +67,7 @@ public class NotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<NotificationDTO> createNotification(@Valid @RequestBody NotificationDTO notificationDTO)
         throws URISyntaxException {
         LOG.debug("REST request to save Notification : {}", notificationDTO);
@@ -87,6 +91,7 @@ public class NotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<NotificationDTO> updateNotification(
         @PathVariable(value = "id", required = false) final Long id,
         @Valid @RequestBody NotificationDTO notificationDTO
@@ -121,6 +126,7 @@ public class NotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PatchMapping(value = "/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<NotificationDTO> partialUpdateNotification(
         @PathVariable(value = "id", required = false) final Long id,
         @NotNull @RequestBody NotificationDTO notificationDTO
@@ -153,6 +159,7 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of Notifications in body.
      */
     @GetMapping("")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<List<NotificationDTO>> getAllNotifications(
         NotificationCriteria criteria,
         @org.springdoc.core.annotations.ParameterObject Pageable pageable
@@ -171,6 +178,7 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the count in body.
      */
     @GetMapping("/count")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<Long> countNotifications(NotificationCriteria criteria) {
         LOG.debug("REST request to count Notifications by criteria: {}", criteria);
         return ResponseEntity.ok().body(notificationQueryService.countByCriteria(criteria));
@@ -183,9 +191,13 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of Notifications in body.
      */
     @GetMapping("/my")
-    public ResponseEntity<List<NotificationDTO>> getMyNotifications(@org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<NotificationDTO>> getMyNotifications(
+        @RequestHeader(value = ORGANIZATION_ID_HEADER, required = false) Long organizationId,
+        @org.springdoc.core.annotations.ParameterObject Pageable pageable
+    ) {
         LOG.debug("REST request to get Notifications for current user");
-        return ResponseEntity.ok(notificationService.findMyNotifications(pageable));
+        return ResponseEntity.ok(notificationService.getMyNotifications(organizationId, pageable));
     }
 
     /**
@@ -195,9 +207,13 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of Notifications in body.
      */
     @GetMapping("/my/latest")
-    public ResponseEntity<List<NotificationDTO>> getMyLatestNotifications(@RequestParam(defaultValue = "5") int limit) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<NotificationDTO>> getMyLatestNotifications(
+        @RequestHeader(value = ORGANIZATION_ID_HEADER, required = false) Long organizationId,
+        @RequestParam(defaultValue = "5") int limit
+    ) {
         LOG.debug("REST request to get latest Notifications for current user");
-        return ResponseEntity.ok(notificationService.findMyLatestNotifications(limit));
+        return ResponseEntity.ok(notificationService.getMyLatestNotifications(organizationId, limit));
     }
 
     /**
@@ -206,9 +222,10 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the unread count in body.
      */
     @GetMapping("/my/unread-count")
-    public ResponseEntity<Long> countMyUnreadNotifications() {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Long> countMyUnreadNotifications(@RequestHeader(value = ORGANIZATION_ID_HEADER, required = false) Long organizationId) {
         LOG.debug("REST request to count unread Notifications for current user");
-        return ResponseEntity.ok(notificationService.countMyUnreadNotifications());
+        return ResponseEntity.ok(notificationService.getMyUnreadCount(organizationId));
     }
 
     /**
@@ -218,9 +235,13 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated notificationDTO.
      */
     @PutMapping("/{id}/read")
-    public ResponseEntity<NotificationDTO> markNotificationAsRead(@PathVariable("id") Long id) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<NotificationDTO> markNotificationAsRead(
+        @PathVariable("id") Long id,
+        @RequestHeader(value = ORGANIZATION_ID_HEADER, required = false) Long organizationId
+    ) {
         LOG.debug("REST request to mark Notification as read : {}", id);
-        return ResponseEntity.ok(notificationService.markMyNotificationAsRead(id));
+        return ResponseEntity.ok(notificationService.markAsRead(id, organizationId));
     }
 
     /**
@@ -229,9 +250,10 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @PutMapping("/my/read-all")
-    public ResponseEntity<Void> markAllMyNotificationsAsRead() {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> markAllMyNotificationsAsRead(@RequestHeader(value = ORGANIZATION_ID_HEADER, required = false) Long organizationId) {
         LOG.debug("REST request to mark all Notifications as read for current user");
-        notificationService.markAllMyNotificationsAsRead();
+        notificationService.markAllAsRead(organizationId);
         return ResponseEntity.noContent().build();
     }
 
@@ -242,6 +264,7 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the notificationDTO, or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<NotificationDTO> getNotification(@PathVariable("id") Long id) {
         LOG.debug("REST request to get Notification : {}", id);
         Optional<NotificationDTO> notificationDTO = notificationService.findOne(id);
@@ -255,6 +278,7 @@ public class NotificationResource {
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<Void> deleteNotification(@PathVariable("id") Long id) {
         LOG.debug("REST request to delete Notification : {}", id);
         notificationService.delete(id);

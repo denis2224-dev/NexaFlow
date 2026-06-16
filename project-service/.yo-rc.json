@@ -14,7 +14,7 @@
     "entities": ["Project", "Task", "Comment", "ActivityLog"],
     "feignClient": true,
     "jhipsterVersion": "9.1.0",
-    "jwtSecretKey": "MTI2MDFlZWE0MGQ2NTJhYjM3MmIwM2EwMjkyNTljMmIwNTQ5M2IwMWZmNGM3MjJhYTEzMjkyZGE3YmQ0NmIwYmViYTM5NDA0Nzc4Mzg0MWVhYTM1NTkxN2QxODBiZGM2MjE3ZTk2NTk3Y2Y4MTM5MmQ0ZjY4YjRhODY1ZjE4ZWU=",
+    "jwtSecretKey": "${JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET}",
     "lastLiquibaseTimestamp": 1781024306000,
     "monorepository": true,
     "nativeLanguage": "en",

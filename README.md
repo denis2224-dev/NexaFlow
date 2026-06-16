@@ -88,3 +88,29 @@ cd user-service
 The monorepo history is intentionally organized so the first commits represent the fresh JHipster-generated applications before local configuration and custom product work.
 
 Do not commit secrets. Use local environment variables or ignored `.env` files for machine-specific configuration.
+
+Required local secrets:
+
+```bash
+export JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET="$(openssl rand -base64 64)"
+export APPLICATION_INTERNAL_API_TOKEN="$(openssl rand -base64 32)"
+export JHIPSTER_CONTROL_CENTER_PASSWORD="$(openssl rand -base64 24)"
+export GRAFANA_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+export SERVER_SSL_KEY_STORE_PASSWORD="$(openssl rand -base64 24)"
+```
+
+Use the same JWT value for the gateway and every service. Use the same internal API token for `project-service` and `notification-service`. For Docker Compose, put these keys in a local `.env` file copied from `.env.example`; `.env` is ignored by git.
+
+Before running a service-level compose file, export the local `.env` into the shell:
+
+```bash
+set -a
+. ./.env
+set +a
+```
+
+TLS keystores are local secret material and are ignored by git. If you enable the `tls` Spring profile, generate a local keystore for each service that needs TLS:
+
+```bash
+keytool -genkey -alias selfsigned -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore src/main/resources/config/tls/keystore.p12 -validity 3650
+```

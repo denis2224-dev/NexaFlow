@@ -1,0 +1,269 @@
+// NexaFlow master JDL - current-state snapshot.
+//
+// Notes:
+// - The current generated folders are gateway, user-service, project-service,
+//   and billing-service.
+// - JDL application baseName values cannot contain hyphens. The existing
+//   user-service and project-service apps are represented with importable
+//   normalized names: userService and projectService.
+// - The gateway currently uses custom Angular feature pages rather than
+//   generated JHipster entity screens, so no entities are assigned to NexaFlow.
+
+application {
+  config {
+    baseName NexaFlow
+    applicationType gateway
+    packageName com.mycompany.myapp
+    authenticationType jwt
+    databaseType sql
+    devDatabaseType postgresql
+    prodDatabaseType postgresql
+    serviceDiscoveryType consul
+    buildTool maven
+    serverPort 8080
+    clientFramework angular
+    reactive true
+    enableTranslation true
+    nativeLanguage en
+    withAdminUi true
+  }
+}
+
+application {
+  config {
+    baseName userService
+    applicationType microservice
+    packageName com.nexaflow.userservice
+    authenticationType jwt
+    databaseType sql
+    devDatabaseType postgresql
+    prodDatabaseType postgresql
+    serviceDiscoveryType consul
+    buildTool maven
+    serverPort 8081
+    skipClient true
+    feignClient true
+    cacheProvider no
+    enableTranslation false
+    nativeLanguage en
+  }
+
+  entities Organization, Membership, Invitation
+}
+
+application {
+  config {
+    baseName projectService
+    applicationType microservice
+    packageName com.nexaflow.project
+    authenticationType jwt
+    databaseType sql
+    devDatabaseType postgresql
+    prodDatabaseType postgresql
+    serviceDiscoveryType consul
+    buildTool maven
+    serverPort 8082
+    skipClient true
+    feignClient true
+    cacheProvider no
+    enableTranslation false
+    nativeLanguage en
+  }
+
+  entities Project, Task, Comment, ActivityLog
+}
+
+application {
+  config {
+    baseName BillingService
+    applicationType microservice
+    packageName com.nexaflow.billing
+    authenticationType jwt
+    databaseType sql
+    devDatabaseType postgresql
+    prodDatabaseType postgresql
+    serviceDiscoveryType consul
+    buildTool maven
+    serverPort 8083
+    skipClient true
+    feignClient true
+    cacheProvider no
+    enableTranslation false
+    nativeLanguage en
+  }
+
+  entities Plan, Subscription
+}
+
+enum MembershipRole {
+  OWNER,
+  ADMIN,
+  MEMBER
+}
+
+enum InvitationStatus {
+  PENDING,
+  ACCEPTED,
+  EXPIRED,
+  REVOKED
+}
+
+enum ProjectStatus {
+  ACTIVE,
+  COMPLETED,
+  ARCHIVED
+}
+
+enum TaskStatus {
+  TODO,
+  IN_PROGRESS,
+  DONE,
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW,
+  MEDIUM,
+  HIGH,
+  URGENT
+}
+
+enum ActivityEntityType {
+  PROJECT,
+  TASK,
+  COMMENT
+}
+
+enum ActivityAction {
+  PROJECT_CREATED,
+  PROJECT_UPDATED,
+  PROJECT_ARCHIVED,
+  TASK_CREATED,
+  TASK_UPDATED,
+  TASK_ASSIGNED,
+  TASK_STATUS_CHANGED,
+  COMMENT_ADDED
+}
+
+enum PlanCode {
+  FREE,
+  PRO,
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE,
+  CANCELLED,
+  EXPIRED
+}
+
+entity Organization {
+  name String required minlength(2) maxlength(100)
+  slug String required unique minlength(2) maxlength(120)
+  description String maxlength(500)
+  createdAt Instant required
+  updatedAt Instant
+  active Boolean required
+}
+
+entity Membership {
+  userId Long required
+  userLogin String required maxlength(100)
+  userEmail String required maxlength(254)
+  role MembershipRole required
+  joinedAt Instant required
+  active Boolean required
+}
+
+entity Invitation {
+  email String required maxlength(254)
+  token String required unique maxlength(120)
+  role MembershipRole required
+  status InvitationStatus required
+  invitedAt Instant required
+  expiresAt Instant required
+  acceptedAt Instant
+  invitedByUserId Long required
+  invitedByLogin String required maxlength(100)
+}
+
+entity Project {
+  organizationId Long required
+  name String required minlength(2) maxlength(100)
+  description TextBlob
+  status ProjectStatus required
+  createdBy String required
+  createdAt Instant required
+  updatedAt Instant
+}
+
+entity Task {
+  organizationId Long required
+  title String required minlength(2) maxlength(150)
+  description TextBlob
+  status TaskStatus required
+  priority TaskPriority required
+  dueDate LocalDate
+  assignedUserLogin String
+  createdBy String required
+  createdAt Instant required
+  updatedAt Instant
+}
+
+entity Comment {
+  organizationId Long required
+  content TextBlob required
+  authorLogin String required
+  createdAt Instant required
+}
+
+entity ActivityLog {
+  organizationId Long required
+  entityType ActivityEntityType required
+  entityId Long required
+  action ActivityAction required
+  performedBy String required
+  createdAt Instant required
+}
+
+entity Plan {
+  code PlanCode required unique
+  name String required maxlength(100)
+  priceMonthly BigDecimal required min(0)
+  maxProjects Integer required min(0)
+  maxUsers Integer required min(0)
+  maxTasks Integer required min(0)
+  active Boolean required
+  createdAt Instant
+  updatedAt Instant
+}
+
+entity Subscription {
+  organizationId Long required min(1)
+  planCode PlanCode required
+  status SubscriptionStatus required
+  startedAt Instant required
+  expiresAt Instant
+  createdBy String maxlength(100)
+  createdAt Instant
+  updatedAt Instant
+}
+
+relationship ManyToOne {
+  Membership{organization(name) required} to Organization
+  Invitation{organization(name) required} to Organization
+}
+
+relationship OneToMany {
+  Project{tasks} to Task{project required}
+  Task{comments} to Comment{task required}
+}
+
+microservice Organization, Membership, Invitation with userService
+microservice Project, Task, Comment, ActivityLog with projectService
+microservice Plan, Subscription with BillingService
+
+dto * with mapstruct
+service * with serviceClass
+paginate Organization, Membership, Invitation, Project, Task, Comment, ActivityLog, Plan, Subscription with pagination
+filter Organization, Membership, Invitation, Plan, Subscription

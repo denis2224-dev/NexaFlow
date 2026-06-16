@@ -12,11 +12,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class ApplicationProperties {
 
     private final Liquibase liquibase = new Liquibase();
+    private String internalApiToken;
 
     // jhipster-needle-application-properties-property
 
     public Liquibase getLiquibase() {
         return liquibase;
+    }
+
+    public String getInternalApiToken() {
+        return internalApiToken;
+    }
+
+    public void setInternalApiToken(String internalApiToken) {
+        this.internalApiToken = internalApiToken;
     }
 
     // jhipster-needle-application-properties-property-getter

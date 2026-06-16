@@ -19,5 +19,6 @@
     <include file="config/liquibase/changelog/20260529181331_added_entity_constraints_Membership.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20260529181332_added_entity_constraints_Invitation.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
+    <include file="config/liquibase/changelog/20260609193000_alter_sequence_generator_increment.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-incremental-changelog - JHipster will add incremental liquibase changelogs here -->
 </databaseChangeLog>
