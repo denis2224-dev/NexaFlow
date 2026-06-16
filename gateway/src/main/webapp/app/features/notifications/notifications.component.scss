@@ -1,0 +1,169 @@
+.nf-header-actions,
+.nf-notification-filters,
+.nf-notification-summary,
+.nf-pagination__manual,
+.nf-notification-row__heading,
+.nf-notification-row__actions {
+  display: flex;
+  align-items: center;
+}
+
+.nf-header-actions {
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
+}
+
+.nf-notification-summary {
+  gap: 0.5rem;
+  min-width: 8rem;
+  justify-content: space-between;
+  padding: 0.48rem 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.68);
+}
+
+.nf-notification-summary span {
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nf-notification-summary strong {
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.nf-notification-filters {
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+:host ::ng-deep .nf-notification-filters .p-select {
+  min-width: 11.5rem;
+}
+
+.nf-notification-list {
+  display: grid;
+}
+
+.nf-notification-row {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 1rem 1.1rem;
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+button.nf-notification-row {
+  cursor: pointer;
+}
+
+button.nf-notification-row:hover,
+button.nf-notification-row:focus-visible {
+  background: rgba(148, 163, 184, 0.08);
+  outline: 0;
+}
+
+.nf-notification-row.is-unread {
+  background: rgba(14, 165, 233, 0.09);
+}
+
+.nf-notification-row__icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 0.6rem;
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+}
+
+.nf-notification-row__main,
+.nf-notification-row--skeleton div {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.nf-notification-row__heading {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.nf-notification-row__heading > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 720;
+}
+
+.nf-unread-dot {
+  width: 0.46rem;
+  height: 0.46rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #38bdf8;
+}
+
+.nf-notification-row__message {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.nf-notification-row__meta,
+.nf-pagination__manual span {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.nf-notification-row__actions {
+  justify-content: flex-end;
+}
+
+.nf-notifications-state {
+  padding: 1.1rem;
+}
+
+.nf-pagination {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.nf-pagination__manual {
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .nf-header-actions,
+  .nf-notification-filters {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .nf-notification-row {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+  }
+
+  .nf-notification-row__actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}

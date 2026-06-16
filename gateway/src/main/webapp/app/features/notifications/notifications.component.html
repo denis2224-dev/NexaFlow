@@ -1,0 +1,135 @@
+<p-toast />
+
+<jhi-page-header
+  eyebrow="Workspace activity"
+  title="Notifications"
+  description="Stay updated with activity across your workspace"
+>
+  <div class="nf-header-actions">
+    <div class="nf-notification-summary">
+      <span>Unread</span>
+      <strong>{{ notificationStateService.unreadCount() }}</strong>
+    </div>
+    <p-button
+      label="Mark all as read"
+      icon="pi pi-check"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="notificationStateService.unreadCount() === 0 || notificationStateService.actionInProgress()"
+      (onClick)="markAllAsRead()"
+    />
+    <p-button label="Refresh" icon="pi pi-refresh" [outlined]="true" (onClick)="refresh()" />
+  </div>
+</jhi-page-header>
+
+<jhi-section-panel title="All notifications" [description]="workspaceName() ? 'Workspace: ' + workspaceName() : 'All available notifications.'">
+  <div panel-actions class="nf-notification-filters">
+    <p-select
+      ariaLabel="Filter by read status"
+      [options]="readStatusOptions"
+      [ngModel]="readStatusFilter()"
+      optionLabel="label"
+      optionValue="value"
+      (onChange)="setReadStatusFilter($event.value)"
+    />
+    <p-select
+      ariaLabel="Filter by notification type"
+      [options]="typeOptions"
+      [ngModel]="typeFilter()"
+      optionLabel="label"
+      optionValue="value"
+      (onChange)="setTypeFilter($event.value)"
+    />
+  </div>
+
+  @if (errorMessage()) {
+    <div class="nf-notifications-state">
+      <jhi-state-panel tone="error" title="Notifications unavailable" [description]="errorMessage()!" />
+    </div>
+  } @else if (isLoading()) {
+    <div class="nf-notification-list">
+      @for (item of [1, 2, 3, 4, 5]; track item) {
+        <div class="nf-notification-row nf-notification-row--skeleton">
+          <p-skeleton shape="circle" size="2.25rem" />
+          <div>
+            <p-skeleton width="14rem" height="0.9rem" />
+            <p-skeleton width="min(28rem, 70vw)" height="0.8rem" />
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (filteredNotifications().length === 0) {
+    <div class="nf-notifications-state">
+      <jhi-state-panel title="You're all caught up" description="New notifications will appear here.">
+        <p-button label="Refresh" icon="pi pi-refresh" [outlined]="true" (onClick)="refresh()" />
+      </jhi-state-panel>
+    </div>
+  } @else {
+    <div class="nf-notification-list">
+      @for (notification of filteredNotifications(); track notification.id) {
+        <button
+          class="nf-notification-row"
+          type="button"
+          [ngClass]="{ 'is-unread': !notification.isRead }"
+          (click)="openNotification(notification)"
+        >
+          <span class="nf-notification-row__icon">
+            <i [class]="iconFor(notification.type)" aria-hidden="true"></i>
+          </span>
+          <span class="nf-notification-row__main">
+            <span class="nf-notification-row__heading">
+              <span>
+                {{ notification.title }}
+                @if (!notification.isRead) {
+                  <span class="nf-unread-dot" aria-label="Unread"></span>
+                }
+              </span>
+              <p-tag [value]="labelFor(notification.type)" [severity]="severityFor(notification.type)" />
+            </span>
+            <span class="nf-notification-row__message">{{ notification.message }}</span>
+            <span class="nf-notification-row__meta">{{ notification.createdAt | date: 'medium' }}</span>
+          </span>
+          <span class="nf-notification-row__actions">
+            @if (!notification.isRead) {
+              <p-button
+                ariaLabel="Mark notification as read"
+                icon="pi pi-check"
+                size="small"
+                severity="secondary"
+                [rounded]="true"
+                [text]="true"
+                [disabled]="notificationStateService.actionInProgress()"
+                (onClick)="markAsRead(notification, $event)"
+              />
+            }
+          </span>
+        </button>
+      }
+    </div>
+
+    <div class="nf-pagination">
+      @if (hasKnownTotal()) {
+        <p-paginator
+          [first]="first()"
+          [rows]="rows()"
+          [totalRecords]="totalItems()"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          (onPageChange)="loadNotifications($event)"
+        />
+      } @else {
+        <div class="nf-pagination__manual">
+          <p-button label="Previous" icon="pi pi-chevron-left" [outlined]="true" [disabled]="first() === 0" (onClick)="previousPage()" />
+          <span>Page {{ pageNumber() }}</span>
+          <p-button
+            label="Next"
+            icon="pi pi-chevron-right"
+            iconPos="right"
+            [outlined]="true"
+            [disabled]="!canGoNext()"
+            (onClick)="nextPage()"
+          />
+        </div>
+      }
+    </div>
+  }
+</jhi-section-panel>

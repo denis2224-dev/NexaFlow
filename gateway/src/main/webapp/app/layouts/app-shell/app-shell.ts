@@ -3,12 +3,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ToastModule } from 'primeng/toast';
 import { filter } from 'rxjs';
 
 import { AccountService } from 'app/core/auth/account.service';
 import ActiveOrganizationSelectorComponent from 'app/core/nexaflow/active-organization-selector.component';
 import { ActiveOrganizationService } from 'app/core/nexaflow/active-organization.service';
 import { LoginService } from 'app/login/login.service';
+import NotificationDropdownComponent from 'app/shared/notification/notification-dropdown.component';
+import { NotificationStateService } from 'app/shared/notification/notification-state.service';
 import { Authority } from 'app/shared/jhipster/constants';
 
 type ShellNavItem = {
@@ -23,7 +26,15 @@ type ShellNavItem = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FontAwesomeModule, ActiveOrganizationSelectorComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    FontAwesomeModule,
+    ToastModule,
+    ActiveOrganizationSelectorComponent,
+    NotificationDropdownComponent,
+  ],
 })
 export default class AppShell {
   readonly sidebarCollapsed = signal(false);
@@ -34,6 +45,7 @@ export default class AppShell {
   readonly navItems: ShellNavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: 'tachometer-alt', exact: true },
     { label: 'Projects', route: '/projects', icon: 'folder-open' },
+    { label: 'Notifications', route: '/notifications', icon: 'bell', exact: true },
     { label: 'Organizations', route: '/app/organizations', icon: 'users' },
     { label: 'Billing', route: '/app/billing', icon: 'database', exact: true },
     { label: 'Profile', route: '/app/profile', icon: 'user', exact: true },
@@ -49,6 +61,9 @@ export default class AppShell {
     }
     if (url.startsWith('/projects')) {
       return 'Projects';
+    }
+    if (url.startsWith('/notifications')) {
+      return 'Notifications';
     }
     if (url.startsWith('/app/profile')) {
       return 'Profile';
@@ -72,6 +87,7 @@ export default class AppShell {
   private readonly accountService = inject(AccountService);
   private readonly activeOrganizationService = inject(ActiveOrganizationService);
   private readonly loginService = inject(LoginService);
+  private readonly notificationStateService = inject(NotificationStateService);
 
   constructor() {
     this.activeOrganizationService.loadOrganizations();
@@ -100,6 +116,7 @@ export default class AppShell {
   }
 
   logout(): void {
+    this.notificationStateService.clearState();
     this.loginService.logout();
     this.router.navigate(['/login']);
   }

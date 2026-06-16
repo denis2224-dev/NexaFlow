@@ -1,0 +1,208 @@
+:host {
+  display: block;
+}
+
+.nf-notification-trigger {
+  position: relative;
+}
+
+.nf-notification-button {
+  position: relative;
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.65rem;
+  background: rgba(15, 23, 42, 0.82);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.nf-notification-button:hover,
+.nf-notification-button:focus-visible {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  outline: 0;
+}
+
+.nf-notification-badge {
+  position: absolute;
+  top: -0.28rem;
+  right: -0.35rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  border: 2px solid #020617;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 0.95rem;
+  text-align: center;
+}
+
+:host ::ng-deep .nf-notification-popover {
+  width: min(92vw, 24rem);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 0.75rem;
+  background: #020617;
+  color: #e5e7eb;
+  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.52);
+}
+
+:host ::ng-deep .nf-notification-popover .p-popover-content {
+  padding: 0;
+}
+
+.nf-notification-panel {
+  overflow: hidden;
+}
+
+.nf-notification-panel__header,
+.nf-notification-panel__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 0.9rem;
+}
+
+.nf-notification-panel__header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.nf-notification-panel__header div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.nf-notification-panel__header strong {
+  color: #f8fafc;
+  font-size: 0.94rem;
+}
+
+.nf-notification-panel__header span,
+.nf-notification-panel__footer,
+.nf-notification-item__time {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.nf-notification-list {
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.nf-notification-item,
+.nf-notification-skeleton {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.78rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.nf-notification-item {
+  cursor: pointer;
+}
+
+.nf-notification-item:hover,
+.nf-notification-item:focus-visible {
+  background: rgba(148, 163, 184, 0.08);
+  outline: 0;
+}
+
+.nf-notification-item.is-unread {
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.nf-notification-item__icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+}
+
+.nf-notification-item__body {
+  display: grid;
+  min-width: 0;
+  gap: 0.16rem;
+}
+
+.nf-notification-item__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #f8fafc;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.nf-notification-item__message {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.nf-notification-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #38bdf8;
+}
+
+.nf-notification-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  padding: 2rem 1rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.nf-notification-empty i {
+  color: #38bdf8;
+  font-size: 1.35rem;
+}
+
+.nf-notification-empty strong {
+  color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.nf-notification-empty span {
+  font-size: 0.78rem;
+}
+
+.nf-notification-skeleton div {
+  display: grid;
+  align-content: center;
+  gap: 0.45rem;
+}
+
+.nf-notification-panel__footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: #7dd3fc;
+  font-weight: 700;
+  text-decoration: none;
+}

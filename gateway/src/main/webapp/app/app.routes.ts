@@ -74,6 +74,12 @@ const routes: Routes = [
     ],
   },
   {
+    path: 'notifications',
+    canActivate: [UserRouteAccessService],
+    loadComponent: () => import('./layouts/app-shell/app-shell'),
+    loadChildren: () => import('./features/notifications/notifications.routes'),
+  },
+  {
     path: 'account',
     loadChildren: () => import('./account/account.route'),
   },

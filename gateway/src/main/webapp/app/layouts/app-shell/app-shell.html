@@ -1,3 +1,5 @@
+<p-toast key="shell-notifications" />
+
 <div class="nf-shell" [class.nf-shell--collapsed]="sidebarCollapsed()" [class.nf-shell--mobile-open]="mobileSidebarOpen()">
   <aside class="nf-sidebar" aria-label="Primary navigation">
     <div class="nf-sidebar__brand">
@@ -56,6 +58,7 @@
       </div>
 
       <div class="nf-topbar__right">
+        <jhi-notification-dropdown />
         <jhi-active-organization-selector />
         <a class="nf-user-pill" routerLink="/app/profile">
           <span class="nf-avatar" aria-hidden="true">{{ userInitial() }}</span>

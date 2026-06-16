@@ -23,6 +23,7 @@ import { authExpiredInterceptor } from 'app/core/interceptor/auth-expired.interc
 import { authInterceptor } from 'app/core/interceptor/auth.interceptor';
 import { errorHandlerInterceptor } from 'app/core/interceptor/error-handler.interceptor';
 import { notificationInterceptor } from 'app/core/interceptor/notification.interceptor';
+import { organizationContextInterceptor } from 'app/core/interceptor/organization-context.interceptor';
 
 import './config/dayjs';
 import { TranslationModule } from 'app/shared/language/translation.module';
@@ -57,7 +58,15 @@ export const appConfig: ApplicationConfig = {
     // Set this to true to enable service worker (PWA)
     provideServiceWorker('ngsw-worker.js', { enabled: false }),
     importProvidersFrom(TranslationModule),
-    provideHttpClient(withInterceptors([authInterceptor, authExpiredInterceptor, errorHandlerInterceptor, notificationInterceptor])),
+    provideHttpClient(
+      withInterceptors([
+        authInterceptor,
+        organizationContextInterceptor,
+        authExpiredInterceptor,
+        errorHandlerInterceptor,
+        notificationInterceptor,
+      ]),
+    ),
     Title,
     MessageService,
     { provide: LOCALE_ID, useValue: 'en' },
