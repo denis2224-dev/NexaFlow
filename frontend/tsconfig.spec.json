@@ -1,9 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/main/webapp/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "compilerOptions": {
     "composite": true,
-    "outDir": "target/out-tsc/spec",
+    "outDir": "dist/out-tsc/spec",
     "types": ["node"]
   }
 }

@@ -1,5 +1,5 @@
-const backendHost = '127.0.0.1';
-const backendPort = 8080;
+const backendHost = process.env.BACKEND_HOST ?? '127.0.0.1';
+const backendPort = process.env.BACKEND_PORT ?? '8080';
 
 /**
  * @type {import('vite').CommonServerOptions['proxy']}

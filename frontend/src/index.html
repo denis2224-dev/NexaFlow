@@ -11,7 +11,7 @@
     <base href="/" />
     <link rel="icon" href="favicon.ico" />
     <link rel="manifest" href="manifest.webapp" />
-    <link rel="stylesheet" href="content/css/loading.css" />
+    <link rel="stylesheet" href="./content/css/loading.css" />
     <!-- jhipster-needle-add-resources-to-root - JHipster will add new resources here -->
   </head>
   <body>
@@ -44,7 +44,7 @@
           <ol>
             <li>
               You started the application from an IDE and you didn't run <code style="color: red">npm start</code> or
-              <code style="color: red">npm run webapp:build</code>.
+              <code style="color: red">npm run build</code>.
             </li>
             <li>
               You had a network error while running <code style="color: red">npm install</code>. If you are behind a corporate proxy, it is
@@ -57,15 +57,15 @@
             </li>
           </ol>
           <h2>Building the client side code again</h2>
-          <p>If you want to go fast, run <code style="color: red">./npmw run app:start</code> to build and run everything.</p>
+          <p>If you want to go fast, run <code style="color: red">npm start</code> from the frontend folder.</p>
           <p>If you want to have more control, so you can debug your issue more easily, you should follow the following steps:</p>
           <ol>
             <li>Install npm dependencies with the command <code style="color: red">npm install</code></li>
             <li>
-              Build the client with the command <code style="color: red">npm run webapp:build</code> or
+              Build the client with the command <code style="color: red">npm run build</code> or
               <code style="color: red">npm start</code>
             </li>
-            <li>Start the server with <code style="color: red">./npmw run app:start</code> or using your IDE</li>
+            <li>Start the gateway backend from the <code style="color: red">gateway</code> folder or using your IDE</li>
           </ol>
 
           <h2>Getting more help</h2>

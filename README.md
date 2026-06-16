@@ -8,9 +8,9 @@ This monorepo contains the gateway, frontend, and backend microservices that mak
 
 | App | Path | Type | Port |
 | --- | --- | --- | --- |
-| Gateway | `gateway/` | JHipster gateway, Angular frontend, JWT auth, Consul, PostgreSQL | `8080` |
+| Gateway | `gateway/` | JHipster gateway backend, JWT auth, Consul, PostgreSQL | `8080` |
 | User Service | `user-service/` | JHipster microservice, JWT auth, Consul, PostgreSQL, Feign client | `8081` |
-| Angular dev server | `gateway/` | Frontend development server | `4200` |
+| Frontend | `frontend/` | Angular frontend development server and nginx container build | `4200` |
 | Consul UI | Docker | Service discovery and configuration | `8500` |
 | Gateway PostgreSQL | Docker | Gateway database | `5432` |
 | User Service PostgreSQL | Docker | User-service database | `5434` |
@@ -20,6 +20,7 @@ This monorepo contains the gateway, frontend, and backend microservices that mak
 ```text
 nexaflow-platform/
 ├── gateway/
+├── frontend/
 ├── user-service/
 ├── docs/
 │   ├── architecture.md
@@ -69,11 +70,12 @@ cd gateway
 ./mvnw
 ```
 
-Run the gateway frontend:
+Run the frontend:
 
 ```bash
-cd gateway
-./npmw run start
+cd frontend
+npm install
+npm run start
 ```
 
 Run the user service:
@@ -81,6 +83,14 @@ Run the user service:
 ```bash
 cd user-service
 ./mvnw
+```
+
+Build the standalone frontend container:
+
+```bash
+cd frontend
+docker build -t nexaflow-frontend .
+docker run --rm -p 4200:80 -e GATEWAY_UPSTREAM=http://host.docker.internal:8080 nexaflow-frontend
 ```
 
 ## Git History

@@ -15,8 +15,7 @@ export default defineConfig(
       },
     },
   },
-  { ignores: ['src/main/docker/'] },
-  { ignores: ['target/classes/static/', 'target/', 'dist/'] },
+  { ignores: ['dist/', '.angular/cache/'] },
   eslint.configs.recommended,
   {
     files: ['**/*.{js,cjs,mjs}'],
@@ -25,7 +24,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/main/webapp/**/*.ts'],
+    files: ['src/**/*.ts'],
     extends: [...tseslint.configs.strictTypeChecked, ...tseslint.configs.stylistic, ...angular.configs.tsRecommended],
     languageOptions: {
       globals: {
@@ -113,13 +112,13 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/main/webapp/**/*.spec.ts'],
+    files: ['src/**/*.spec.ts'],
     rules: {
       '@typescript-eslint/no-empty-function': 'off',
     },
   },
   {
-    files: ['src/main/webapp/**/*.html'],
+    files: ['src/**/*.html'],
     extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
     rules: {
       '@angular-eslint/template/click-events-have-key-events': 'off',
