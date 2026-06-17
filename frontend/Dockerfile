@@ -2,7 +2,7 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package*.json ./
 RUN npm ci
 
 COPY . .
@@ -18,3 +18,6 @@ COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist/nexa-flow/ /usr/share/nginx/html/
 
 EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=5 \
+    CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1

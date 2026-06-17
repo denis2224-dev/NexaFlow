@@ -40,6 +40,7 @@ logs/
 **/junit-report.xml
 **/test-results/
 **/playwright-report/
+backups/
 
 # Docker and local volumes
 docker-data/

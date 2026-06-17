@@ -1,0 +1,371 @@
+name: nexaflow-platform
+
+services:
+  # =========================
+  # INFRASTRUCTURE
+  # =========================
+
+  consul:
+    image: hashicorp/consul:1.20
+    container_name: nexaflow-consul
+    command: agent -server -bootstrap-expect=1 -ui -client=0.0.0.0
+    ports:
+      - "8500:8500"
+    networks:
+      - nexaflow-network
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: nexaflow-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - nexaflow-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # =========================
+  # POSTGRES DATABASES
+  # =========================
+
+  gateway-postgres:
+    image: postgres:16-alpine
+    container_name: nexaflow-gateway-postgres
+    environment:
+      POSTGRES_DB: nexaflow
+      POSTGRES_USER: nexaflow
+      POSTGRES_PASSWORD: ${GATEWAY_DB_PASSWORD:-nexaflow}
+    ports:
+      - "5432:5432"
+    volumes:
+      - gateway-postgres-data:/var/lib/postgresql/data
+    networks:
+      - nexaflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexaflow -d nexaflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  user-postgres:
+    image: postgres:16-alpine
+    container_name: nexaflow-user-postgres
+    environment:
+      POSTGRES_DB: userservice
+      POSTGRES_USER: nexaflow
+      POSTGRES_PASSWORD: ${USER_SERVICE_DB_PASSWORD:-nexaflow}
+    ports:
+      - "5434:5432"
+    volumes:
+      - user-postgres-data:/var/lib/postgresql/data
+    networks:
+      - nexaflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexaflow -d userservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  project-postgres:
+    image: postgres:16-alpine
+    container_name: nexaflow-project-postgres
+    environment:
+      POSTGRES_DB: projectservice
+      POSTGRES_USER: nexaflow
+      POSTGRES_PASSWORD: ${PROJECT_SERVICE_DB_PASSWORD:-nexaflow}
+    ports:
+      - "5435:5432"
+    volumes:
+      - project-postgres-data:/var/lib/postgresql/data
+    networks:
+      - nexaflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexaflow -d projectservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  billing-postgres:
+    image: postgres:16-alpine
+    container_name: nexaflow-billing-postgres
+    environment:
+      POSTGRES_DB: billingservice
+      POSTGRES_USER: nexaflow
+      POSTGRES_PASSWORD: ${BILLING_SERVICE_DB_PASSWORD:-nexaflow}
+    ports:
+      - "5436:5432"
+    volumes:
+      - billing-postgres-data:/var/lib/postgresql/data
+    networks:
+      - nexaflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexaflow -d billingservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  notification-postgres:
+    image: postgres:16-alpine
+    container_name: nexaflow-notification-postgres
+    environment:
+      POSTGRES_DB: notificationservice
+      POSTGRES_USER: nexaflow
+      POSTGRES_PASSWORD: ${NOTIFICATION_SERVICE_DB_PASSWORD:-nexaflow}
+    ports:
+      - "5437:5432"
+    volumes:
+      - notification-postgres-data:/var/lib/postgresql/data
+    networks:
+      - nexaflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexaflow -d notificationservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # =========================
+  # BACKEND SERVICES
+  # =========================
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: nexaflow-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,api-docs
+      SERVER_PORT: 8080
+
+      SPRING_R2DBC_URL: r2dbc:postgresql://gateway-postgres:5432/nexaflow
+      SPRING_R2DBC_USERNAME: nexaflow
+      SPRING_R2DBC_PASSWORD: ${GATEWAY_DB_PASSWORD:-nexaflow}
+      SPRING_LIQUIBASE_URL: jdbc:postgresql://gateway-postgres:5432/nexaflow
+      SPRING_LIQUIBASE_USER: nexaflow
+      SPRING_LIQUIBASE_PASSWORD: ${GATEWAY_DB_PASSWORD:-nexaflow}
+
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS: "true"
+
+      JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: ${JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET}
+      APPLICATION_INTERNAL_API_TOKEN: ${APPLICATION_INTERNAL_API_TOKEN}
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8080:8080"
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      gateway-postgres:
+        condition: service_healthy
+    networks:
+      - nexaflow-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: nexaflow-user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,api-docs
+      SERVER_PORT: 8081
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-postgres:5432/userservice
+      SPRING_DATASOURCE_USERNAME: nexaflow
+      SPRING_DATASOURCE_PASSWORD: ${USER_SERVICE_DB_PASSWORD:-nexaflow}
+      SPRING_LIQUIBASE_URL: jdbc:postgresql://user-postgres:5432/userservice
+      SPRING_LIQUIBASE_USER: nexaflow
+      SPRING_LIQUIBASE_PASSWORD: ${USER_SERVICE_DB_PASSWORD:-nexaflow}
+
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS: "true"
+
+      JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: ${JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET}
+      APPLICATION_INTERNAL_API_TOKEN: ${APPLICATION_INTERNAL_API_TOKEN}
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8081:8081"
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-postgres:
+        condition: service_healthy
+    networks:
+      - nexaflow-network
+    restart: unless-stopped
+
+  project-service:
+    build:
+      context: ./project-service
+      dockerfile: Dockerfile
+    container_name: nexaflow-project-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,api-docs
+      SERVER_PORT: 8082
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://project-postgres:5432/projectservice
+      SPRING_DATASOURCE_USERNAME: nexaflow
+      SPRING_DATASOURCE_PASSWORD: ${PROJECT_SERVICE_DB_PASSWORD:-nexaflow}
+      SPRING_LIQUIBASE_URL: jdbc:postgresql://project-postgres:5432/projectservice
+      SPRING_LIQUIBASE_USER: nexaflow
+      SPRING_LIQUIBASE_PASSWORD: ${PROJECT_SERVICE_DB_PASSWORD:-nexaflow}
+
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS: "true"
+
+      JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: ${JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET}
+      APPLICATION_INTERNAL_API_TOKEN: ${APPLICATION_INTERNAL_API_TOKEN}
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8082:8082"
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      project-postgres:
+        condition: service_healthy
+    networks:
+      - nexaflow-network
+    restart: unless-stopped
+
+  billing-service:
+    build:
+      context: ./billing-service
+      dockerfile: Dockerfile
+    container_name: nexaflow-billing-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,api-docs
+      SERVER_PORT: 8083
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://billing-postgres:5432/billingservice
+      SPRING_DATASOURCE_USERNAME: nexaflow
+      SPRING_DATASOURCE_PASSWORD: ${BILLING_SERVICE_DB_PASSWORD:-nexaflow}
+      SPRING_LIQUIBASE_URL: jdbc:postgresql://billing-postgres:5432/billingservice
+      SPRING_LIQUIBASE_USER: nexaflow
+      SPRING_LIQUIBASE_PASSWORD: ${BILLING_SERVICE_DB_PASSWORD:-nexaflow}
+
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS: "true"
+
+      JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: ${JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET}
+      APPLICATION_INTERNAL_API_TOKEN: ${APPLICATION_INTERNAL_API_TOKEN}
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8083:8083"
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      billing-postgres:
+        condition: service_healthy
+    networks:
+      - nexaflow-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: nexaflow-notification-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,api-docs
+      SERVER_PORT: 8084
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-postgres:5432/notificationservice
+      SPRING_DATASOURCE_USERNAME: nexaflow
+      SPRING_DATASOURCE_PASSWORD: ${NOTIFICATION_SERVICE_DB_PASSWORD:-nexaflow}
+      SPRING_LIQUIBASE_URL: jdbc:postgresql://notification-postgres:5432/notificationservice
+      SPRING_LIQUIBASE_USER: nexaflow
+      SPRING_LIQUIBASE_PASSWORD: ${NOTIFICATION_SERVICE_DB_PASSWORD:-nexaflow}
+
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS: "true"
+
+      JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: ${JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET}
+      APPLICATION_INTERNAL_API_TOKEN: ${APPLICATION_INTERNAL_API_TOKEN}
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8084:8084"
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      notification-postgres:
+        condition: service_healthy
+    networks:
+      - nexaflow-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nexaflow-frontend
+    environment:
+      GATEWAY_UPSTREAM: http://gateway:8080
+    ports:
+      - "4200:80"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - nexaflow-network
+    restart: unless-stopped
+
+# =========================
+# NETWORKS
+# =========================
+
+networks:
+  nexaflow-network:
+    driver: bridge
+
+# =========================
+# VOLUMES
+# =========================
+
+volumes:
+  gateway-postgres-data:
+  user-postgres-data:
+  project-postgres-data:
+  billing-postgres-data:
+  notification-postgres-data:
