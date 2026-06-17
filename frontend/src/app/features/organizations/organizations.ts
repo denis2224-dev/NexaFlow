@@ -1,25 +1,47 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+} from "@angular/core";
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from "@angular/forms";
 
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { finalize } from 'rxjs';
+import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
+import { finalize } from "rxjs";
 
-import { ActiveOrganizationService } from 'app/core/nexaflow/active-organization.service';
-import { InvitationService } from 'app/core/nexaflow/invitation.service';
-import { MembershipService } from 'app/core/nexaflow/membership.service';
-import { extractNexaFlowErrorMessage } from 'app/core/nexaflow/nexaflow-error.util';
-import { Invitation, Membership, Workspace, WorkspaceRole } from 'app/core/nexaflow/nexaflow.model';
-import { WorkspaceService } from 'app/core/nexaflow/workspace.service';
-import PageHeader from 'app/shared/ui/page-header/page-header';
-import SectionPanel from 'app/shared/ui/section-panel/section-panel';
-import StatePanel from 'app/shared/ui/state-panel/state-panel';
+import { ActiveOrganizationService } from "app/core/nexaflow/active-organization.service";
+import { InvitationService } from "app/core/nexaflow/invitation.service";
+import { MembershipService } from "app/core/nexaflow/membership.service";
+import { extractNexaFlowErrorMessage } from "app/core/nexaflow/nexaflow-error.util";
+import {
+  Invitation,
+  Membership,
+  Workspace,
+  WorkspaceRole,
+} from "app/core/nexaflow/nexaflow.model";
+import { WorkspaceService } from "app/core/nexaflow/workspace.service";
+import PageHeader from "app/shared/ui/page-header/page-header";
+import SectionPanel from "app/shared/ui/section-panel/section-panel";
+import StatePanel from "app/shared/ui/state-panel/state-panel";
 
 @Component({
-  selector: 'jhi-organizations',
+  selector: "jhi-organizations",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './organizations.html',
-  styleUrl: './organizations.scss',
-  imports: [ReactiveFormsModule, FontAwesomeModule, PageHeader, SectionPanel, StatePanel],
+  templateUrl: "./organizations.html",
+  styleUrl: "./organizations.scss",
+  imports: [
+    ReactiveFormsModule,
+    FontAwesomeModule,
+    PageHeader,
+    SectionPanel,
+    StatePanel,
+  ],
 })
 export default class Organizations implements OnInit {
   readonly workspaces = signal<Workspace[]>([]);
@@ -43,30 +65,62 @@ export default class Organizations implements OnInit {
   readonly invitationsError = signal<string | null>(null);
   readonly invitationsSuccess = signal<string | null>(null);
   readonly revokingInvitationId = signal<number | null>(null);
-  readonly roleOptions: WorkspaceRole[] = ['ADMIN', 'MEMBER'];
+  readonly roleOptions: WorkspaceRole[] = ["ADMIN", "MEMBER"];
 
   readonly createForm = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(2), Validators.maxLength(100)] }),
-    slug: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(2), Validators.maxLength(120)] }),
-    description: new FormControl<string | null>(null, { validators: [Validators.maxLength(500)] }),
+    name: new FormControl("", {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(2),
+        Validators.maxLength(100),
+      ],
+    }),
+    slug: new FormControl("", {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(2),
+        Validators.maxLength(120),
+      ],
+    }),
+    description: new FormControl<string | null>(null, {
+      validators: [Validators.maxLength(500)],
+    }),
   });
 
   readonly inviteForm = new FormGroup({
-    email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email, Validators.maxLength(254)] }),
-    role: new FormControl<WorkspaceRole>('MEMBER', { nonNullable: true, validators: [Validators.required] }),
+    email: new FormControl("", {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.email,
+        Validators.maxLength(254),
+      ],
+    }),
+    role: new FormControl<WorkspaceRole>("MEMBER", {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
   });
 
   readonly acceptForm = new FormGroup({
-    token: new FormControl('', {
+    token: new FormControl("", {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8), Validators.maxLength(500)],
+      validators: [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.maxLength(500),
+      ],
     }),
   });
 
   private readonly workspaceService = inject(WorkspaceService);
   private readonly invitationService = inject(InvitationService);
   private readonly membershipService = inject(MembershipService);
-  private readonly activeOrganizationService = inject(ActiveOrganizationService);
+  private readonly activeOrganizationService = inject(
+    ActiveOrganizationService,
+  );
 
   ngOnInit(): void {
     this.loadWorkspaces();
@@ -79,10 +133,15 @@ export default class Organizations implements OnInit {
       .getMyWorkspaces()
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: workspaces => this.workspaces.set(workspaces),
-        error: error => {
+        next: (workspaces) => this.workspaces.set(workspaces),
+        error: (error) => {
           this.workspaces.set([]);
-          this.errorMessage.set(this.extractErrorMessage(error, 'Organizations could not be loaded. Please try again.'));
+          this.errorMessage.set(
+            this.extractErrorMessage(
+              error,
+              "Organizations could not be loaded. Please try again.",
+            ),
+          );
         },
       });
   }
@@ -90,7 +149,7 @@ export default class Organizations implements OnInit {
   openAcceptDialog(): void {
     this.successMessage.set(null);
     this.errorMessage.set(null);
-    this.acceptForm.reset({ token: '' });
+    this.acceptForm.reset({ token: "" });
     this.acceptDialogOpen.set(true);
   }
 
@@ -114,12 +173,17 @@ export default class Organizations implements OnInit {
       .subscribe({
         next: () => {
           this.acceptDialogOpen.set(false);
-          this.successMessage.set('Invitation accepted.');
+          this.successMessage.set("Invitation accepted.");
           this.activeOrganizationService.refreshOrganizations();
           this.loadWorkspaces();
         },
-        error: error => {
-          this.errorMessage.set(this.extractErrorMessage(error, 'Invitation could not be accepted.'));
+        error: (error) => {
+          this.errorMessage.set(
+            this.extractErrorMessage(
+              error,
+              "Invitation could not be accepted.",
+            ),
+          );
         },
       });
   }
@@ -127,7 +191,7 @@ export default class Organizations implements OnInit {
   openMembersDialog(workspace: Workspace): void {
     const workspaceId = this.getWorkspaceId(workspace);
     if (workspaceId === null) {
-      this.errorMessage.set('Members cannot be loaded for this workspace yet.');
+      this.errorMessage.set("Members cannot be loaded for this workspace yet.");
       return;
     }
 
@@ -152,10 +216,12 @@ export default class Organizations implements OnInit {
       .getWorkspaceMembers(organizationId)
       .pipe(finalize(() => this.isMembersLoading.set(false)))
       .subscribe({
-        next: members => this.members.set(members),
-        error: error => {
+        next: (members) => this.members.set(members),
+        error: (error) => {
           this.members.set([]);
-          this.membersError.set(this.extractErrorMessage(error, 'Members could not be loaded.'));
+          this.membersError.set(
+            this.extractErrorMessage(error, "Members could not be loaded."),
+          );
         },
       });
   }
@@ -163,7 +229,9 @@ export default class Organizations implements OnInit {
   openInvitationsDialog(workspace: Workspace): void {
     const workspaceId = this.getWorkspaceId(workspace);
     if (workspaceId === null) {
-      this.errorMessage.set('Invitations cannot be loaded for this workspace yet.');
+      this.errorMessage.set(
+        "Invitations cannot be loaded for this workspace yet.",
+      );
       return;
     }
 
@@ -192,10 +260,12 @@ export default class Organizations implements OnInit {
       .getForWorkspace(organizationId)
       .pipe(finalize(() => this.isInvitationsLoading.set(false)))
       .subscribe({
-        next: invitations => this.invitations.set(invitations),
-        error: error => {
+        next: (invitations) => this.invitations.set(invitations),
+        error: (error) => {
           this.invitations.set([]);
-          this.invitationsError.set(this.extractErrorMessage(error, 'Invitations could not be loaded.'));
+          this.invitationsError.set(
+            this.extractErrorMessage(error, "Invitations could not be loaded."),
+          );
         },
       });
   }
@@ -206,7 +276,7 @@ export default class Organizations implements OnInit {
     const invitationId = this.getInvitationId(invitation);
 
     if (workspaceId === null || invitationId === null) {
-      this.invitationsError.set('This invitation cannot be revoked yet.');
+      this.invitationsError.set("This invitation cannot be revoked yet.");
       return;
     }
 
@@ -218,11 +288,13 @@ export default class Organizations implements OnInit {
       .pipe(finalize(() => this.revokingInvitationId.set(null)))
       .subscribe({
         next: () => {
-          this.invitationsSuccess.set('Invitation revoked.');
+          this.invitationsSuccess.set("Invitation revoked.");
           this.loadInvitations(workspaceId);
         },
-        error: error => {
-          this.invitationsError.set(this.extractErrorMessage(error, 'Invitation could not be revoked.'));
+        error: (error) => {
+          this.invitationsError.set(
+            this.extractErrorMessage(error, "Invitation could not be revoked."),
+          );
         },
       });
   }
@@ -254,7 +326,13 @@ export default class Organizations implements OnInit {
   }
 
   getMemberName(member: Membership): string {
-    return member.userLogin ?? member.login ?? member.userEmail ?? member.email ?? (member.userId ? `User ${member.userId}` : '-');
+    return (
+      member.userLogin ??
+      member.login ??
+      member.userEmail ??
+      member.email ??
+      (member.userId ? `User ${member.userId}` : "-")
+    );
   }
 
   getMemberEmail(member: Membership): string | null {
@@ -265,24 +343,26 @@ export default class Organizations implements OnInit {
   }
 
   getInvitationEmail(invitation: Invitation): string {
-    return invitation.email ?? invitation.userEmail ?? invitation.userLogin ?? '-';
+    return (
+      invitation.email ?? invitation.userEmail ?? invitation.userLogin ?? "-"
+    );
   }
 
   getActiveLabel(active: boolean | null | undefined): string {
     if (active === true) {
-      return 'Active';
+      return "Active";
     }
 
     if (active === false) {
-      return 'Inactive';
+      return "Inactive";
     }
 
-    return '-';
+    return "-";
   }
 
   formatDate(value: string | null | undefined): string {
     if (!value) {
-      return '-';
+      return "-";
     }
 
     const date = new Date(value);
@@ -291,26 +371,37 @@ export default class Organizations implements OnInit {
     }
 
     return new Intl.DateTimeFormat(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   }
 
   trackMember(index: number, member: Membership): number | string {
-    return this.getMemberId(member) ?? member.userId ?? member.userLogin ?? member.userEmail ?? index;
+    return (
+      this.getMemberId(member) ??
+      member.userId ??
+      member.userLogin ??
+      member.userEmail ??
+      index
+    );
   }
 
   trackInvitation(index: number, invitation: Invitation): number | string {
-    return this.getInvitationId(invitation) ?? invitation.token ?? invitation.email ?? index;
+    return (
+      this.getInvitationId(invitation) ??
+      invitation.token ??
+      invitation.email ??
+      index
+    );
   }
 
   openCreateDialog(): void {
     this.successMessage.set(null);
     this.errorMessage.set(null);
-    this.createForm.reset({ name: '', slug: '', description: null });
+    this.createForm.reset({ name: "", slug: "", description: null });
     this.createDialogOpen.set(true);
   }
 
@@ -334,23 +425,28 @@ export default class Organizations implements OnInit {
       .subscribe({
         next: () => {
           this.createDialogOpen.set(false);
-          this.successMessage.set('Workspace created.');
+          this.successMessage.set("Workspace created.");
           this.activeOrganizationService.refreshOrganizations();
           this.loadWorkspaces();
         },
-        error: error => this.errorMessage.set(this.extractErrorMessage(error, 'Workspace could not be created.')),
+        error: (error) =>
+          this.errorMessage.set(
+            this.extractErrorMessage(error, "Workspace could not be created."),
+          ),
       });
   }
 
   openInviteDialog(workspace: Workspace): void {
     const workspaceId = this.getWorkspaceId(workspace);
     if (workspaceId === null) {
-      this.errorMessage.set('Invitations cannot be created for this workspace yet.');
+      this.errorMessage.set(
+        "Invitations cannot be created for this workspace yet.",
+      );
       return;
     }
 
     this.selectedWorkspace.set(workspace);
-    this.inviteForm.reset({ email: '', role: 'MEMBER' });
+    this.inviteForm.reset({ email: "", role: "MEMBER" });
     this.inviteDialogOpen.set(true);
   }
 
@@ -379,14 +475,49 @@ export default class Organizations implements OnInit {
         next: () => {
           this.inviteDialogOpen.set(false);
           this.selectedWorkspace.set(null);
-          this.successMessage.set('Invitation created.');
+          this.successMessage.set("Invitation created.");
         },
-        error: error => this.errorMessage.set(this.extractErrorMessage(error, 'Invitation could not be created.')),
+        error: (error) =>
+          this.errorMessage.set(
+            this.extractErrorMessage(error, "Invitation could not be created."),
+          ),
       });
   }
 
   getWorkspaceId(workspace: Workspace): number | null {
     return workspace.organizationId ?? workspace.id ?? null;
+  }
+
+  selectWorkspace(workspace: Workspace): void {
+    const workspaceId = this.getWorkspaceId(workspace);
+    if (workspaceId !== null) {
+      this.activeOrganizationService.selectOrganization(workspaceId);
+      this.successMessage.set(
+        `${workspace.name ?? workspace.slug ?? "Workspace"} selected.`,
+      );
+    }
+  }
+
+  isActiveWorkspace(workspace: Workspace): boolean {
+    const workspaceId = this.getWorkspaceId(workspace);
+    return (
+      workspaceId !== null &&
+      this.activeOrganizationService.selectedOrganizationId() === workspaceId
+    );
+  }
+
+  canManageWorkspace(workspace: Workspace): boolean {
+    return workspace.role === "OWNER" || workspace.role === "ADMIN";
+  }
+
+  getWorkspaceInitials(workspace: Workspace): string {
+    const label = workspace.name ?? workspace.slug ?? "Workspace";
+    return label
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("");
   }
 
   trackWorkspace(index: number, workspace: Workspace): number | string {

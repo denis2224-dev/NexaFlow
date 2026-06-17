@@ -8,9 +8,10 @@
   gap: 0.18rem;
   min-width: 0;
   padding: 0.38rem 0.55rem;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--nf-border);
   border-radius: 0.85rem;
-  background: rgba(15, 23, 42, 0.7);
+  background: #fff;
+  box-shadow: var(--nf-shadow-sm);
 }
 
 .nf-workspace-selector > span {
@@ -24,7 +25,7 @@
 .nf-workspace-selector strong,
 .nf-workspace-selector a {
   overflow: hidden;
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 0.82rem;
   font-weight: 750;
   line-height: 1.35;
@@ -46,7 +47,7 @@
 
 :host ::ng-deep .nf-workspace-select .p-select-label {
   padding: 0;
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 0.82rem;
   font-weight: 750;
 }

@@ -1,147 +1,286 @@
-<jhi-page-header
-  eyebrow="Dashboard"
-  title="Command center"
-  [description]="
-    workspaceName() ? 'Workspace: ' + workspaceName() : 'No workspace selected. Create or join a workspace to manage projects.'
-  "
->
-  <div class="nf-workspace-context">
-    <span>Workspace</span>
-    <strong>{{ workspaceName() || 'None selected' }}</strong>
-  </div>
-</jhi-page-header>
-
-<div class="nf-dashboard-grid">
-  <jhi-section-panel title="Workspace" description="Choose where your team will organize its work.">
-    @if (isLoading()) {
-      <jhi-state-panel tone="loading" title="Loading your workspaces" description="Preparing your workspace overview." />
-    } @else if (errorMessage()) {
-      <jhi-state-panel tone="error" title="Workspace unavailable" [description]="errorMessage()!" />
-    } @else if (hasWorkspaces()) {
-      <div class="nf-workspace-summary">
-        <div>
-          <span class="nf-kicker">Available workspaces</span>
-          <strong>{{ workspaces().length }}</strong>
-          <p>
-            Current workspace:
-            <b>{{ workspaceName() || 'None selected' }}</b>
-          </p>
-        </div>
-        <a class="nf-button nf-button--secondary" routerLink="/app/organizations">
-          <fa-icon icon="users" />
-          <span>Open organizations</span>
-        </a>
-      </div>
-    } @else {
-      <div class="nf-onboarding-panel">
-        <div class="nf-onboarding-panel__copy">
-          <span class="nf-kicker">First step</span>
-          <h3>Create your first workspace</h3>
-          <p>
-            Workspaces keep teams, members, roles, and projects organized in one place. Create one for your company, department, or client
-            group.
-          </p>
-        </div>
-        <div class="nf-onboarding-panel__actions">
-          <a class="nf-button" routerLink="/app/organizations">
-            <fa-icon icon="plus" />
-            <span>Create workspace</span>
-          </a>
-          <a class="nf-button nf-button--secondary" routerLink="/app/organizations">
-            <fa-icon icon="users" />
-            <span>Join with invitation</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="nf-readiness-list" aria-label="Workspace setup steps">
-        <div class="nf-readiness-item">
-          <span></span>
-          <div>
-            <strong>Create a workspace</strong>
-            <p>Give your team a dedicated space for collaboration.</p>
-          </div>
-        </div>
-        <div class="nf-readiness-item">
-          <span></span>
-          <div>
-            <strong>Invite members</strong>
-            <p>Add teammates when your workspace is ready.</p>
-          </div>
-        </div>
-        <div class="nf-readiness-item">
-          <span></span>
-          <div>
-            <strong>Organize projects</strong>
-            <p>Project work will appear here once projects are available.</p>
-          </div>
-        </div>
-      </div>
-    }
-  </jhi-section-panel>
-
-  <jhi-section-panel
-    title="Project summary"
-    [description]="workspaceName() ? 'Live totals for ' + workspaceName() + '.' : 'No workspace selected.'"
-  >
-    @if (isSummaryLoading()) {
-      <jhi-state-panel tone="loading" title="Loading project summary" description="Fetching project and task totals." />
-    } @else if (summaryErrorMessage()) {
-      <jhi-state-panel tone="error" title="Project summary unavailable" [description]="summaryErrorMessage()!" />
-    } @else if (summary()) {
-      <div class="nf-summary-grid">
-        <p-card styleClass="nf-summary-card">
-          <span>Total projects</span>
-          <strong>{{ summary()!.totalProjects }}</strong>
-        </p-card>
-        <p-card styleClass="nf-summary-card">
-          <span>Active projects</span>
-          <strong>{{ summary()!.activeProjects }}</strong>
-        </p-card>
-        <p-card styleClass="nf-summary-card">
-          <span>Completed projects</span>
-          <strong>{{ summary()!.completedProjects }}</strong>
-        </p-card>
-        <p-card styleClass="nf-summary-card">
-          <span>Total tasks</span>
-          <strong>{{ summary()!.totalTasks }}</strong>
-        </p-card>
-        <p-card styleClass="nf-summary-card">
-          <span>Completed tasks</span>
-          <strong>{{ summary()!.completedTasks }}</strong>
-        </p-card>
-        <p-card styleClass="nf-summary-card nf-summary-card--alert">
-          <span>Overdue tasks</span>
-          <strong>{{ summary()!.overdueTasks }}</strong>
-        </p-card>
-      </div>
-      <div class="nf-summary-actions">
-        <a class="nf-button" routerLink="/projects">
-          <fa-icon icon="tasks" />
-          <span>Open projects</span>
-        </a>
-      </div>
-    } @else {
-      <jhi-state-panel
-        title="No workspace selected"
-        description="Create or join a workspace first. Your projects, tasks, and progress will appear here when a workspace is selected."
-      >
-        <a class="nf-button" routerLink="/app/organizations">
-          <fa-icon icon="users" />
-          <span>Open organizations</span>
-        </a>
-      </jhi-state-panel>
-    }
-  </jhi-section-panel>
-
-  <jhi-section-panel title="Profile" description="Your personal workspace identity.">
-    <div class="nf-account-panel">
-      <span class="nf-account-panel__avatar">{{ account()?.login?.charAt(0)?.toUpperCase() || 'N' }}</span>
-      <div>
-        <strong>{{ account()?.firstName || account()?.login }}</strong>
-        <p>{{ account()?.email || 'No email available' }}</p>
-      </div>
-      <a class="nf-button nf-button--secondary" routerLink="/app/profile">View profile</a>
+<section class="nf-dashboard-hero">
+  <div class="nf-dashboard-hero__copy">
+    <span class="nf-eyebrow">Dashboard</span>
+    <h1>{{ greeting() }}</h1>
+    <p>
+      @if (workspaceName()) { {{ workspaceName() }} workspace overview, project
+      health, notifications, and subscription context. } @else { Create or join
+      a workspace to start managing projects, tasks, billing, and notifications.
+      }
+    </p>
+    <div class="nf-dashboard-hero__actions">
+      <p-button
+        label="Create project"
+        icon="pi pi-plus"
+        routerLink="/projects"
+        [disabled]="!activeOrganization()"
+      />
+      <p-button
+        label="View tasks"
+        icon="pi pi-list-check"
+        severity="secondary"
+        [outlined]="true"
+        routerLink="/projects"
+      />
     </div>
+  </div>
+
+  <div class="nf-dashboard-hero__context">
+    <img
+      src="content/images/nexaflow/dashboard-workflow.svg"
+      alt="Project workflow dashboard illustration"
+      loading="lazy"
+    />
+    <div class="nf-organization-chip">
+      <span class="nf-organization-chip__mark"
+        >{{ (workspaceName() || 'N').charAt(0).toUpperCase() }}</span
+      >
+      <div>
+        <span>Current organization</span>
+        <strong>{{ workspaceName() || 'None selected' }}</strong>
+        @if (workspaceRole()) {
+        <small>{{ workspaceRole() }}</small>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+@if (isLoading()) {
+<jhi-section-panel>
+  <jhi-state-panel
+    tone="loading"
+    title="Loading workspace"
+    description="Preparing your dashboard context."
+  />
+</jhi-section-panel>
+} @else if (errorMessage() && !activeOrganization()) {
+<jhi-section-panel>
+  <jhi-state-panel
+    tone="error"
+    title="Workspace unavailable"
+    [description]="errorMessage()!"
+  >
+    <p-button
+      label="Open organizations"
+      icon="pi pi-users"
+      routerLink="/app/organizations"
+    />
+  </jhi-state-panel>
+</jhi-section-panel>
+} @else if (!hasWorkspaces()) {
+<jhi-section-panel>
+  <div class="nf-onboarding-panel">
+    <div class="nf-onboarding-panel__copy">
+      <span class="nf-eyebrow">First step</span>
+      <h2>Create your first workspace</h2>
+      <p>
+        Workspaces keep teams, roles, projects, billing, and notifications
+        isolated in one place.
+      </p>
+    </div>
+    <div class="nf-onboarding-panel__actions">
+      <p-button
+        label="Create workspace"
+        icon="pi pi-plus"
+        routerLink="/app/organizations"
+      />
+      <p-button
+        label="Accept invitation"
+        icon="pi pi-user-plus"
+        severity="secondary"
+        [outlined]="true"
+        routerLink="/app/organizations"
+      />
+    </div>
+  </div>
+</jhi-section-panel>
+} @else {
+<section class="nf-stat-grid" aria-label="Workspace summary">
+  @if (isSummaryLoading()) { @for (item of [1, 2, 3, 4]; track item) {
+  <article class="nf-stat-card nf-stat-card--loading">
+    <span></span>
+    <strong></strong>
+    <small></small>
+  </article>
+  } } @else if (summaryErrorMessage()) {
+  <jhi-section-panel>
+    <jhi-state-panel
+      tone="error"
+      title="Project summary unavailable"
+      [description]="summaryErrorMessage()!"
+    />
   </jhi-section-panel>
+  } @else { @for (stat of stats(); track stat.title) {
+  <article class="nf-stat-card" [class]="'nf-stat-card--' + stat.tone">
+    <span class="nf-stat-card__icon"
+      ><i [class]="stat.icon" aria-hidden="true"></i
+    ></span>
+    <div>
+      <span>{{ stat.title }}</span>
+      <strong>{{ stat.value }}</strong>
+      <small>{{ stat.detail }}</small>
+    </div>
+  </article>
+  } }
+</section>
+
+<div class="nf-dashboard-layout">
+  <div class="nf-dashboard-main">
+    <div class="nf-chart-grid">
+      <jhi-section-panel
+        title="Task completion"
+        description="Completed versus incomplete tasks from the project summary API."
+      >
+        @if (taskCompletionChart(); as chartData) {
+        <div class="nf-chart-shell">
+          <p-chart
+            type="doughnut"
+            [data]="chartData"
+            [options]="doughnutOptions"
+          />
+          @if (completionRate() !== null) {
+          <div class="nf-chart-center">
+            <strong>{{ completionRate() }}%</strong>
+            <span>complete</span>
+          </div>
+          }
+        </div>
+        } @else {
+        <jhi-state-panel
+          title="No task data yet"
+          description="Task completion appears after tasks exist in this organization."
+        />
+        }
+      </jhi-section-panel>
+
+      <jhi-section-panel
+        title="Project status"
+        description="Project status totals from the dashboard summary API."
+      >
+        @if (projectStatusChart(); as chartData) {
+        <div class="nf-chart-shell nf-chart-shell--bar">
+          <p-chart type="bar" [data]="chartData" [options]="barOptions" />
+        </div>
+        } @else {
+        <jhi-state-panel
+          title="No project data yet"
+          description="Create a project to see status distribution."
+        />
+        }
+      </jhi-section-panel>
+    </div>
+
+    <jhi-section-panel
+      title="Recent activity"
+      description="Latest notifications from notification-service."
+    >
+      @if (notificationStateService.loading()) {
+      <jhi-state-panel
+        tone="loading"
+        title="Loading activity"
+        description="Fetching recent notifications."
+      />
+      } @else if (latestNotifications().length === 0) {
+      <jhi-state-panel
+        title="No recent activity"
+        description="Task, project, invitation, and subscription updates will appear here."
+      />
+      } @else {
+      <div class="nf-activity-feed">
+        @for (notification of latestNotifications(); track notification.id) {
+        <article class="nf-activity-item">
+          <span class="nf-activity-item__icon"
+            ><i
+              [class]="getNotificationIcon(notification.type)"
+              aria-hidden="true"
+            ></i
+          ></span>
+          <div>
+            <strong>{{ getNotificationLabel(notification) }}</strong>
+            <p>{{ notification.message }}</p>
+            <span>{{ notification.createdAt | date: 'medium' }}</span>
+          </div>
+          @if (!notification.isRead) {
+          <p-tag value="Unread" severity="info" />
+          }
+        </article>
+        }
+      </div>
+      }
+    </jhi-section-panel>
+  </div>
+
+  <aside class="nf-dashboard-side">
+    <jhi-section-panel
+      title="Organization overview"
+      [description]="workspaceDescription() || 'Workspace membership and billing context.'"
+    >
+      <div class="nf-overview-list">
+        <div>
+          <span>Role</span>
+          <strong>{{ workspaceRole() || 'Member' }}</strong>
+        </div>
+        <div>
+          <span>Available workspaces</span>
+          <strong>{{ workspaces().length }}</strong>
+        </div>
+        @if (usage()) {
+        <div>
+          <span>Members</span>
+          <strong
+            >{{ usage()!.users.used }} / {{ formatLimit(usage()!.users.limit)
+            }}</strong
+          >
+        </div>
+        <div>
+          <span>Projects usage</span>
+          <strong
+            >{{ usage()!.projects.used }} / {{
+            formatLimit(usage()!.projects.limit) }}</strong
+          >
+        </div>
+        }
+      </div>
+      <div class="nf-side-actions">
+        <p-button
+          label="Organizations"
+          icon="pi pi-users"
+          size="small"
+          [outlined]="true"
+          routerLink="/app/organizations"
+        />
+        <p-button
+          label="Billing"
+          icon="pi pi-credit-card"
+          size="small"
+          [outlined]="true"
+          routerLink="/app/billing"
+        />
+      </div>
+    </jhi-section-panel>
+
+    <jhi-section-panel
+      title="Available data"
+      description="Sections that need additional backend data are kept explicit."
+    >
+      <div class="nf-data-gaps">
+        <div>
+          <i class="pi pi-user" aria-hidden="true"></i>
+          <span>Assigned-to-me tasks need a user-scoped task endpoint.</span>
+        </div>
+        <div>
+          <i class="pi pi-calendar" aria-hidden="true"></i>
+          <span>Due-soon tasks need a due-date query endpoint.</span>
+        </div>
+        <div>
+          <i class="pi pi-chart-pie" aria-hidden="true"></i>
+          <span
+            >Priority/status breakdowns need aggregate task statistics.</span
+          >
+        </div>
+      </div>
+    </jhi-section-panel>
+  </aside>
 </div>
+}

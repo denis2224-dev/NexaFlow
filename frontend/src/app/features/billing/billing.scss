@@ -24,7 +24,7 @@
 }
 
 .nf-billing-context strong {
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 0.9rem;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .nf-plan-heading > span {
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 1.25rem;
   font-weight: 750;
 }
@@ -70,7 +70,7 @@
 
 .nf-plan-meta dd {
   margin: 0.28rem 0 0;
-  color: #e5e7eb;
+  color: var(--nf-text);
   font-size: 0.9rem;
 }
 
@@ -100,10 +100,10 @@
 :host ::ng-deep .nf-usage-card,
 :host ::ng-deep .nf-plan-card {
   height: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--nf-border);
   border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.72);
-  color: #e5e7eb;
+  background: #fff;
+  color: var(--nf-text);
 }
 
 :host ::ng-deep .nf-usage-card .p-card-body,
@@ -146,7 +146,7 @@
 }
 
 .nf-usage-card__count strong {
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 2rem;
   line-height: 1;
 }
@@ -171,7 +171,7 @@
 }
 
 .nf-plan-card__header strong {
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 1.8rem;
   line-height: 1;
 }
@@ -203,7 +203,7 @@
 }
 
 .nf-plan-limits strong {
-  color: #e5e7eb;
+  color: var(--nf-text);
   font-size: 0.9rem;
 }
 

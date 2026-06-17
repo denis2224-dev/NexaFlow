@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260" role="img" aria-labelledby="title desc">
+  <title id="title">Empty projects illustration</title>
+  <desc id="desc">A clean empty project board with cards ready to be created.</desc>
+  <defs>
+    <linearGradient id="board" x1="60" x2="342" y1="42" y2="224" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e0f2fe"/>
+      <stop offset="1" stop-color="#eef2ff"/>
+    </linearGradient>
+    <filter id="shadow" x="43" y="31" width="330" height="210" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="14" flood-color="#020617" flood-opacity=".16" stdDeviation="14"/>
+    </filter>
+  </defs>
+  <rect width="420" height="260" fill="none"/>
+  <circle cx="87" cy="61" r="28" fill="#38bdf8" opacity=".16"/>
+  <circle cx="338" cy="202" r="34" fill="#6366f1" opacity=".14"/>
+  <g filter="url(#shadow)">
+    <rect width="278" height="164" x="71" y="54" fill="url(#board)" rx="20"/>
+    <rect width="74" height="14" x="98" y="83" fill="#0f172a" opacity=".75" rx="7"/>
+    <rect width="224" height="1" x="98" y="116" fill="#94a3b8" opacity=".42"/>
+    <rect width="64" height="70" x="98" y="138" fill="#fff" rx="12"/>
+    <rect width="64" height="70" x="178" y="138" fill="#fff" rx="12"/>
+    <rect width="64" height="70" x="258" y="138" fill="#fff" rx="12"/>
+    <rect width="36" height="8" x="112" y="156" fill="#38bdf8" opacity=".65" rx="4"/>
+    <rect width="42" height="8" x="192" y="156" fill="#22c55e" opacity=".62" rx="4"/>
+    <rect width="34" height="8" x="272" y="156" fill="#6366f1" opacity=".62" rx="4"/>
+    <rect width="32" height="32" x="114" y="176" fill="#e2e8f0" rx="10"/>
+    <rect width="32" height="32" x="194" y="176" fill="#e2e8f0" rx="10"/>
+    <path fill="none" stroke="#94a3b8" stroke-linecap="round" stroke-width="4" d="M276 192h24M288 180v24"/>
+  </g>
+</svg>

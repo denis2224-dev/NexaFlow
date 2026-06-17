@@ -1,6 +1,6 @@
-@import 'bootstrap-variables';
-@import 'bootstrap/scss/functions';
-@import 'bootstrap/scss/variables';
+@import "bootstrap-variables";
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
 
 /* ==============================================================
 Bootstrap tweaks
@@ -234,3 +234,81 @@ angular-cli removes postcss-rtl processed inline css, processed rules must be ad
   }
 }
 /* jhipster-needle-scss-add-main JHipster will add new css style */
+
+/* ==========================================================================
+NexaFlow design system
+========================================================================== */
+
+:root {
+  --nf-primary: #2563eb;
+  --nf-primary-strong: #1d4ed8;
+  --nf-secondary: #4f46e5;
+  --nf-accent: #0891b2;
+  --nf-background: #f4f7fb;
+  --nf-background-dark: #020617;
+  --nf-surface: #ffffff;
+  --nf-surface-muted: #f8fafc;
+  --nf-surface-dark: #0f172a;
+  --nf-surface-dark-soft: #111827;
+  --nf-text: #0f172a;
+  --nf-text-inverse: #f8fafc;
+  --nf-muted: #64748b;
+  --nf-muted-dark: #94a3b8;
+  --nf-border: #dbe4f0;
+  --nf-border-dark: rgba(148, 163, 184, 0.18);
+  --nf-success: #16a34a;
+  --nf-warning: #d97706;
+  --nf-danger: #dc2626;
+  --nf-info: #0284c7;
+  --nf-radius-sm: 0.45rem;
+  --nf-radius: 0.75rem;
+  --nf-radius-lg: 1rem;
+  --nf-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --nf-shadow: 0 18px 55px rgba(15, 23, 42, 0.12);
+  --nf-shadow-dark: 0 22px 70px rgba(0, 0, 0, 0.28);
+  --nf-space-1: 0.25rem;
+  --nf-space-2: 0.5rem;
+  --nf-space-3: 0.75rem;
+  --nf-space-4: 1rem;
+  --nf-space-5: 1.25rem;
+  --nf-space-6: 1.5rem;
+}
+
+body {
+  background: var(--nf-background);
+  color: var(--nf-text);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.nf-avatar,
+.nf-user-avatar {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--nf-primary), var(--nf-accent));
+  color: var(--nf-text-inverse);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.nf-button,
+.nf-link-button,
+.nf-icon-button {
+  text-decoration: none;
+}
+
+.nf-button:focus-visible,
+.nf-link-button:focus-visible,
+.nf-icon-button:focus-visible,
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.42);
+  outline-offset: 2px;
+}
+
+.nf-prime-table .p-datatable-wrapper {
+  overflow-x: auto;
+}

@@ -10,9 +10,9 @@
   min-width: 12rem;
   gap: 0.2rem;
   padding: 0.48rem 0.7rem;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--nf-border);
   border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.68);
+  background: #fff;
 }
 
 .nf-workspace-context span {
@@ -24,7 +24,7 @@
 
 .nf-workspace-context strong {
   overflow: hidden;
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 0.86rem;
   font-weight: 760;
   text-overflow: ellipsis;
@@ -48,9 +48,9 @@
   gap: 0.35rem;
   min-height: 4.4rem;
   padding: 0.9rem;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--nf-border);
   border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.54);
+  background: var(--nf-surface-muted);
 }
 
 .nf-project-facts span {
@@ -61,14 +61,14 @@
 }
 
 .nf-project-facts strong {
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 0.9rem;
 }
 
 .nf-project-description {
   margin: 0;
   padding: 0 1.2rem 1.2rem;
-  color: #94a3b8;
+  color: var(--nf-muted);
   line-height: 1.65;
 }
 
@@ -79,14 +79,14 @@
 }
 
 .nf-task-title strong {
-  color: #f8fafc;
+  color: var(--nf-text);
   font-weight: 750;
 }
 
 .nf-task-title span {
   max-width: 30rem;
   overflow: hidden;
-  color: #94a3b8;
+  color: var(--nf-muted);
   font-size: 0.84rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -102,19 +102,46 @@
 
 :host ::ng-deep .nf-prime-table .nf-task-row:hover,
 :host ::ng-deep .nf-prime-table .nf-task-row:focus-visible {
-  background: rgba(30, 41, 59, 0.84);
-  box-shadow: inset 3px 0 0 #38bdf8;
+  background: #f1f5f9;
+  box-shadow: inset 3px 0 0 var(--nf-primary);
+}
+
+.nf-task-row--overdue {
+  box-shadow: inset 3px 0 0 var(--nf-danger);
+}
+
+.nf-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nf-assignee__avatar {
+  display: grid;
+  width: 1.85rem;
+  height: 1.85rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--nf-primary);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.nf-due-date--overdue {
+  color: var(--nf-danger);
+  font-weight: 750;
 }
 
 :host ::ng-deep .nf-prime-table {
-  --p-datatable-header-cell-background: rgba(15, 23, 42, 0.95);
-  --p-datatable-header-cell-color: #cbd5e1;
-  --p-datatable-row-background: rgba(8, 13, 24, 0.68);
-  --p-datatable-row-color: #cbd5e1;
-  --p-datatable-row-hover-background: rgba(30, 41, 59, 0.72);
-  --p-datatable-border-color: rgba(148, 163, 184, 0.12);
-  --p-paginator-background: rgba(8, 13, 24, 0.82);
-  --p-paginator-color: #cbd5e1;
+  --p-datatable-header-cell-background: #f8fafc;
+  --p-datatable-header-cell-color: #475569;
+  --p-datatable-row-background: #fff;
+  --p-datatable-row-color: #0f172a;
+  --p-datatable-row-hover-background: #f1f5f9;
+  --p-datatable-border-color: var(--nf-border);
+  --p-paginator-background: #fff;
+  --p-paginator-color: #475569;
 }
 
 @media (max-width: 920px) {

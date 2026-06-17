@@ -1,9 +1,9 @@
 .nf-section-panel {
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--nf-border);
   border-radius: 0.75rem;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 13, 24, 0.92));
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  background: var(--nf-surface);
+  box-shadow: var(--nf-shadow-sm);
 }
 
 .nf-section-panel__header {
@@ -12,19 +12,19 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.1rem 1.2rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid var(--nf-border);
 }
 
 h2 {
   margin: 0;
-  color: #e5e7eb;
+  color: var(--nf-text);
   font-size: 0.98rem;
   font-weight: 650;
 }
 
 p {
   margin: 0.35rem 0 0;
-  color: #94a3b8;
+  color: var(--nf-muted);
   font-size: 0.86rem;
   line-height: 1.55;
 }

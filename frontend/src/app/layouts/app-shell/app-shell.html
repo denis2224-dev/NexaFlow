@@ -1,6 +1,10 @@
 <p-toast key="shell-notifications" />
 
-<div class="nf-shell" [class.nf-shell--collapsed]="sidebarCollapsed()" [class.nf-shell--mobile-open]="mobileSidebarOpen()">
+<div
+  class="nf-shell"
+  [class.nf-shell--collapsed]="sidebarCollapsed()"
+  [class.nf-shell--mobile-open]="mobileSidebarOpen()"
+>
   <aside class="nf-sidebar" aria-label="Primary navigation">
     <div class="nf-sidebar__brand">
       <span class="nf-brand-mark" aria-hidden="true">N</span>
@@ -12,22 +16,26 @@
 
     <nav class="nf-sidebar__nav">
       @for (item of navItems; track item.route) {
-        <a
-          class="nf-nav-link"
-          [routerLink]="item.route"
-          routerLinkActive="is-active"
-          [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-        >
-          <fa-icon [icon]="item.icon" />
-          <span>{{ item.label }}</span>
-        </a>
-      }
-
-      @if (isAdmin()) {
-        <a class="nf-nav-link" routerLink="/admin" routerLinkActive="is-active">
-          <fa-icon icon="users-cog" />
-          <span>Admin</span>
-        </a>
+      <a
+        class="nf-nav-link"
+        [routerLink]="item.route"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        [attr.title]="sidebarCollapsed() ? item.label : null"
+      >
+        <fa-icon [icon]="item.icon" />
+        <span>{{ item.label }}</span>
+      </a>
+      } @if (isAdmin()) {
+      <a
+        class="nf-nav-link"
+        routerLink="/admin"
+        routerLinkActive="is-active"
+        [attr.title]="sidebarCollapsed() ? 'Admin' : null"
+      >
+        <fa-icon icon="users-cog" />
+        <span>Admin</span>
+      </a>
       }
     </nav>
 
@@ -36,19 +44,33 @@
         <fa-icon icon="bars" />
         <span>{{ sidebarCollapsed() ? 'Expand' : 'Collapse' }}</span>
       </button>
-      <button class="nf-sidebar-action nf-sidebar-action--danger" type="button" (click)="logout()">
+      <button
+        class="nf-sidebar-action nf-sidebar-action--danger"
+        type="button"
+        (click)="logout()"
+      >
         <fa-icon icon="sign-out-alt" />
         <span>Sign out</span>
       </button>
     </div>
   </aside>
 
-  <button class="nf-mobile-backdrop" type="button" aria-label="Close navigation" (click)="toggleMobileSidebar()"></button>
+  <button
+    class="nf-mobile-backdrop"
+    type="button"
+    aria-label="Close navigation"
+    (click)="toggleMobileSidebar()"
+  ></button>
 
   <div class="nf-shell__body">
     <header class="nf-topbar">
       <div class="nf-topbar__left">
-        <button class="nf-icon-button nf-topbar__menu" type="button" aria-label="Open navigation" (click)="toggleMobileSidebar()">
+        <button
+          class="nf-icon-button nf-topbar__menu"
+          type="button"
+          aria-label="Open navigation"
+          (click)="toggleMobileSidebar()"
+        >
           <fa-icon icon="bars" />
         </button>
         <div>
@@ -58,6 +80,15 @@
       </div>
 
       <div class="nf-topbar__right">
+        <label class="nf-topbar-search">
+          <fa-icon icon="search" aria-hidden="true" />
+          <input
+            type="search"
+            placeholder="Search workspace"
+            aria-label="Search workspace"
+            disabled
+          />
+        </label>
         <jhi-notification-dropdown />
         <jhi-active-organization-selector />
         <a class="nf-user-pill" routerLink="/app/profile">

@@ -19,9 +19,10 @@
   min-width: 8rem;
   justify-content: space-between;
   padding: 0.48rem 0.7rem;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--nf-border);
   border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.68);
+  background: #fff;
+  box-shadow: var(--nf-shadow-sm);
 }
 
 .nf-notification-summary span {
@@ -32,7 +33,7 @@
 }
 
 .nf-notification-summary strong {
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 1rem;
   font-weight: 800;
 }
@@ -57,7 +58,7 @@
   width: 100%;
   padding: 1rem 1.1rem;
   border: 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  border-bottom: 1px solid var(--nf-border);
   background: transparent;
   color: inherit;
   text-align: left;
@@ -69,12 +70,12 @@ button.nf-notification-row {
 
 button.nf-notification-row:hover,
 button.nf-notification-row:focus-visible {
-  background: rgba(148, 163, 184, 0.08);
+  background: #f8fafc;
   outline: 0;
 }
 
 .nf-notification-row.is-unread {
-  background: rgba(14, 165, 233, 0.09);
+  background: rgba(37, 99, 235, 0.07);
 }
 
 .nf-notification-row__icon {
@@ -105,7 +106,7 @@ button.nf-notification-row:focus-visible {
   align-items: center;
   gap: 0.45rem;
   min-width: 0;
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: 0.95rem;
   font-weight: 720;
 }
@@ -121,7 +122,7 @@ button.nf-notification-row:focus-visible {
 .nf-notification-row__message {
   display: -webkit-box;
   overflow: hidden;
-  color: #cbd5e1;
+  color: #475569;
   font-size: 0.88rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;

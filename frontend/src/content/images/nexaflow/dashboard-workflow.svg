@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="320" viewBox="0 0 520 320" role="img" aria-labelledby="title desc">
+  <title id="title">Abstract project workflow illustration</title>
+  <desc id="desc">Connected project cards, check marks, and progress lines for NexaFlow dashboards.</desc>
+  <defs>
+    <linearGradient id="nf-bg" x1="42" x2="462" y1="28" y2="298" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8" stop-opacity=".28"/>
+      <stop offset=".52" stop-color="#6366f1" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity=".16"/>
+    </linearGradient>
+    <linearGradient id="nf-card" x1="92" x2="415" y1="76" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#dbeafe"/>
+    </linearGradient>
+    <filter id="nf-shadow" x="35" y="32" width="450" height="250" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" flood-color="#020617" flood-opacity=".22" stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="520" height="320" fill="none"/>
+  <path fill="url(#nf-bg)" d="M57 91c25-50 95-68 157-50 39 11 55 38 91 44 47 8 78-24 119-6 42 18 57 74 43 119-20 65-102 97-177 88-41-5-56-23-100-21-49 2-78 28-116 6-53-30-46-122-17-180Z"/>
+  <g filter="url(#nf-shadow)">
+    <rect width="166" height="94" x="78" y="82" fill="url(#nf-card)" rx="18"/>
+    <rect width="124" height="12" x="102" y="110" fill="#0f172a" opacity=".78" rx="6"/>
+    <rect width="92" height="9" x="102" y="136" fill="#64748b" opacity=".38" rx="5"/>
+    <rect width="52" height="9" x="102" y="153" fill="#38bdf8" opacity=".72" rx="5"/>
+    <circle cx="218" cy="148" r="12" fill="#22c55e"/>
+    <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="m212 148 4 4 8-10"/>
+    <rect width="178" height="106" x="266" y="116" fill="url(#nf-card)" rx="18"/>
+    <rect width="78" height="12" x="292" y="145" fill="#0f172a" opacity=".78" rx="6"/>
+    <rect width="126" height="10" x="292" y="173" fill="#64748b" opacity=".34" rx="5"/>
+    <rect width="98" height="10" x="292" y="193" fill="#6366f1" opacity=".72" rx="5"/>
+    <circle cx="413" cy="149" r="14" fill="#6366f1"/>
+    <path fill="none" stroke="#fff" stroke-linecap="round" stroke-width="4" d="M406 149h14M413 142v14"/>
+    <rect width="150" height="82" x="124" y="204" fill="url(#nf-card)" rx="18"/>
+    <rect width="84" height="11" x="150" y="230" fill="#0f172a" opacity=".78" rx="6"/>
+    <rect width="96" height="9" x="150" y="254" fill="#64748b" opacity=".34" rx="5"/>
+  </g>
+  <path fill="none" stroke="#7dd3fc" stroke-dasharray="8 9" stroke-linecap="round" stroke-width="4" d="M244 130c33 2 39 21 54 33M246 213c32-9 44-25 64-42"/>
+  <circle cx="65" cy="234" r="8" fill="#38bdf8" opacity=".85"/>
+  <circle cx="457" cy="76" r="7" fill="#22c55e" opacity=".8"/>
+  <circle cx="415" cy="271" r="10" fill="#6366f1" opacity=".72"/>
+</svg>

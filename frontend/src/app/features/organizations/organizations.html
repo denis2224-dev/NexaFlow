@@ -4,7 +4,11 @@
   description="Create workspaces, manage members, and handle invitations from one place."
 >
   <div class="nf-header-actions">
-    <button class="nf-button nf-button--secondary" type="button" (click)="openAcceptDialog()">
+    <button
+      class="nf-button nf-button--secondary"
+      type="button"
+      (click)="openAcceptDialog()"
+    >
       <fa-icon icon="user-plus" />
       <span>Accept invitation</span>
     </button>
@@ -16,343 +20,554 @@
 </jhi-page-header>
 
 @if (successMessage()) {
-  <div class="nf-toast nf-toast--success">{{ successMessage() }}</div>
+<div class="nf-toast nf-toast--success">{{ successMessage() }}</div>
+} @if (errorMessage()) {
+<div class="nf-toast nf-toast--error">{{ errorMessage() }}</div>
 }
 
-@if (errorMessage()) {
-  <div class="nf-toast nf-toast--error">{{ errorMessage() }}</div>
-}
-
-<jhi-section-panel title="Your organizations" description="Workspaces connected to your account.">
+<jhi-section-panel
+  title="Your organizations"
+  description="Workspaces connected to your account."
+>
   @if (isLoading()) {
-    <jhi-state-panel tone="loading" title="Loading organizations" description="Fetching your workspaces." />
+  <jhi-state-panel
+    tone="loading"
+    title="Loading organizations"
+    description="Fetching your workspaces."
+  />
   } @else if (workspaces().length === 0 && !errorMessage()) {
-    <jhi-state-panel title="No organizations yet" description="Create a workspace or accept an invitation to join an existing one.">
-      <div class="nf-empty-actions">
-        <button class="nf-button" type="button" (click)="openCreateDialog()">
-          <fa-icon icon="plus" />
-          <span>Create workspace</span>
-        </button>
-        <button class="nf-button nf-button--secondary" type="button" (click)="openAcceptDialog()">
-          <span>Accept invitation</span>
-        </button>
-      </div>
-    </jhi-state-panel>
-  } @else if (workspaces().length > 0) {
-    <div class="nf-table-wrap">
-      <table class="nf-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Short name</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th class="nf-table__actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (workspace of workspaces(); track trackWorkspace($index, workspace)) {
-            <tr>
-              <td>
-                <div class="nf-workspace-name">
-                  <strong>{{ workspace.name || 'Unnamed workspace' }}</strong>
-                  @if (workspace.description) {
-                    <span>{{ workspace.description }}</span>
-                  }
-                </div>
-              </td>
-              <td>{{ workspace.slug || '-' }}</td>
-              <td>
-                <span class="nf-pill">{{ workspace.role || '-' }}</span>
-              </td>
-              <td>
-                <span class="nf-status" [class.nf-status--muted]="workspace.active !== true">
-                  {{ getActiveLabel(workspace.active) }}
-                </span>
-              </td>
-              <td class="nf-table__actions">
-                @if (getWorkspaceId(workspace) !== null) {
-                  <div class="nf-action-row">
-                    <button class="nf-link-button" type="button" (click)="openMembersDialog(workspace)">
-                      <fa-icon icon="users" />
-                      <span>Members</span>
-                    </button>
-                    <button class="nf-link-button" type="button" (click)="openInvitationsDialog(workspace)">
-                      <span>Invitations</span>
-                    </button>
-                    <button class="nf-link-button" type="button" (click)="openInviteDialog(workspace)">
-                      <fa-icon icon="user-plus" />
-                      <span>Invite</span>
-                    </button>
-                  </div>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+  <jhi-state-panel
+    title="No organizations yet"
+    description="Create a workspace or accept an invitation to join an existing one."
+  >
+    <div class="nf-empty-actions">
+      <button class="nf-button" type="button" (click)="openCreateDialog()">
+        <fa-icon icon="plus" />
+        <span>Create workspace</span>
+      </button>
+      <button
+        class="nf-button nf-button--secondary"
+        type="button"
+        (click)="openAcceptDialog()"
+      >
+        <span>Accept invitation</span>
+      </button>
     </div>
+  </jhi-state-panel>
+  } @else if (workspaces().length > 0) {
+  <div class="nf-workspace-grid">
+    @for (workspace of workspaces(); track trackWorkspace($index, workspace)) {
+    <article
+      class="nf-workspace-card"
+      [class.is-active]="isActiveWorkspace(workspace)"
+    >
+      <header>
+        <span class="nf-workspace-avatar"
+          >{{ getWorkspaceInitials(workspace) }}</span
+        >
+        <div>
+          <h2>{{ workspace.name || 'Unnamed workspace' }}</h2>
+          <p>
+            {{ workspace.description || 'No workspace description provided.' }}
+          </p>
+        </div>
+      </header>
+
+      <dl class="nf-workspace-meta">
+        <div>
+          <dt>Short name</dt>
+          <dd>{{ workspace.slug || '-' }}</dd>
+        </div>
+        <div>
+          <dt>Role</dt>
+          <dd><span class="nf-pill">{{ workspace.role || '-' }}</span></dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>
+            <span
+              class="nf-status"
+              [class.nf-status--muted]="workspace.active !== true"
+            >
+              {{ getActiveLabel(workspace.active) }}
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt>Updated</dt>
+          <dd>
+            {{ formatDate(workspace.updatedAt || workspace.lastModifiedDate ||
+            workspace.createdAt || workspace.createdDate) }}
+          </dd>
+        </div>
+      </dl>
+
+      @if (getWorkspaceId(workspace) !== null) {
+      <footer class="nf-card-actions">
+        <button
+          class="nf-button nf-button--secondary"
+          type="button"
+          [disabled]="isActiveWorkspace(workspace)"
+          (click)="selectWorkspace(workspace)"
+        >
+          <span
+            >{{ isActiveWorkspace(workspace) ? 'Selected' : 'Select' }}</span
+          >
+        </button>
+        <button
+          class="nf-link-button"
+          type="button"
+          (click)="openMembersDialog(workspace)"
+        >
+          <fa-icon icon="users" />
+          <span>Members</span>
+        </button>
+        @if (canManageWorkspace(workspace)) {
+        <button
+          class="nf-link-button"
+          type="button"
+          (click)="openInvitationsDialog(workspace)"
+        >
+          <span>Invitations</span>
+        </button>
+        <button
+          class="nf-link-button"
+          type="button"
+          (click)="openInviteDialog(workspace)"
+        >
+          <fa-icon icon="user-plus" />
+          <span>Invite</span>
+        </button>
+        }
+      </footer>
+      }
+    </article>
+    }
+  </div>
   }
 </jhi-section-panel>
 
 @if (createDialogOpen()) {
-  <div class="nf-dialog-backdrop" role="presentation" (click)="closeCreateDialog()">
-    <section class="nf-dialog" role="dialog" aria-modal="true" aria-labelledby="create-workspace-title" (click)="$event.stopPropagation()">
-      <header class="nf-dialog__header">
-        <div>
-          <h2 id="create-workspace-title">Create workspace</h2>
-          <p>Set up a dedicated workspace and make yourself its owner.</p>
-        </div>
-        <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeCreateDialog()">
+<div
+  class="nf-dialog-backdrop"
+  role="presentation"
+  (click)="closeCreateDialog()"
+>
+  <section
+    class="nf-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-workspace-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="nf-dialog__header">
+      <div>
+        <h2 id="create-workspace-title">Create workspace</h2>
+        <p>Set up a dedicated workspace and make yourself its owner.</p>
+      </div>
+      <button
+        class="nf-icon-button"
+        type="button"
+        aria-label="Close dialog"
+        (click)="closeCreateDialog()"
+      >
+        <fa-icon icon="times" />
+      </button>
+    </header>
+
+    <form
+      class="nf-form"
+      [formGroup]="createForm"
+      (ngSubmit)="createWorkspace()"
+    >
+      <label>
+        <span>Name</span>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Workspace name"
+          autocomplete="organization"
+        />
+      </label>
+      <label>
+        <span>Short name</span>
+        <input
+          type="text"
+          formControlName="slug"
+          placeholder="team-workspace"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        <span>Description</span>
+        <textarea
+          formControlName="description"
+          rows="3"
+          placeholder="Optional workspace description"
+        ></textarea>
+      </label>
+      <footer class="nf-dialog__footer">
+        <button
+          class="nf-button nf-button--secondary"
+          type="button"
+          (click)="closeCreateDialog()"
+        >
+          Cancel
+        </button>
+        <button
+          class="nf-button"
+          type="submit"
+          [disabled]="createForm.invalid || isSaving()"
+        >
+          {{ isSaving() ? 'Creating...' : 'Create workspace' }}
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>
+} @if (acceptDialogOpen()) {
+<div
+  class="nf-dialog-backdrop"
+  role="presentation"
+  (click)="closeAcceptDialog()"
+>
+  <section
+    class="nf-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="accept-invitation-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="nf-dialog__header">
+      <div>
+        <h2 id="accept-invitation-title">Accept invitation</h2>
+        <p>Paste the invitation code you received.</p>
+      </div>
+      <button
+        class="nf-icon-button"
+        type="button"
+        aria-label="Close dialog"
+        (click)="closeAcceptDialog()"
+      >
+        <fa-icon icon="times" />
+      </button>
+    </header>
+
+    <form
+      class="nf-form"
+      [formGroup]="acceptForm"
+      (ngSubmit)="acceptInvitation()"
+    >
+      <label>
+        <span>Invitation code</span>
+        <input
+          type="text"
+          formControlName="token"
+          placeholder="Paste code"
+          autocomplete="off"
+        />
+      </label>
+      <footer class="nf-dialog__footer">
+        <button
+          class="nf-button nf-button--secondary"
+          type="button"
+          (click)="closeAcceptDialog()"
+        >
+          Cancel
+        </button>
+        <button
+          class="nf-button"
+          type="submit"
+          [disabled]="acceptForm.invalid || isAccepting()"
+        >
+          {{ isAccepting() ? 'Accepting...' : 'Accept invitation' }}
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>
+} @if (inviteDialogOpen()) {
+<div
+  class="nf-dialog-backdrop"
+  role="presentation"
+  (click)="closeInviteDialog()"
+>
+  <section
+    class="nf-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="invite-user-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="nf-dialog__header">
+      <div>
+        <h2 id="invite-user-title">Invite member</h2>
+        <p>{{ selectedWorkspace()?.name || 'Selected workspace' }}</p>
+      </div>
+      <button
+        class="nf-icon-button"
+        type="button"
+        aria-label="Close dialog"
+        (click)="closeInviteDialog()"
+      >
+        <fa-icon icon="times" />
+      </button>
+    </header>
+
+    <form
+      class="nf-form"
+      [formGroup]="inviteForm"
+      (ngSubmit)="sendInvitation()"
+    >
+      <label>
+        <span>Email</span>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="teammate@example.com"
+          autocomplete="email"
+        />
+      </label>
+      <label>
+        <span>Role</span>
+        <select formControlName="role">
+          @for (role of roleOptions; track role) {
+          <option [value]="role">{{ role }}</option>
+          }
+        </select>
+      </label>
+      <footer class="nf-dialog__footer">
+        <button
+          class="nf-button nf-button--secondary"
+          type="button"
+          (click)="closeInviteDialog()"
+        >
+          Cancel
+        </button>
+        <button
+          class="nf-button"
+          type="submit"
+          [disabled]="inviteForm.invalid || isInviting()"
+        >
+          {{ isInviting() ? 'Sending...' : 'Send invitation' }}
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>
+} @if (membersDialogOpen()) {
+<div
+  class="nf-dialog-backdrop"
+  role="presentation"
+  (click)="closeMembersDialog()"
+>
+  <section
+    class="nf-dialog nf-dialog--wide"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="workspace-members-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="nf-dialog__header">
+      <div>
+        <h2 id="workspace-members-title">Members</h2>
+        <p>{{ selectedWorkspace()?.name || 'Selected workspace' }}</p>
+      </div>
+      <div class="nf-dialog__tools">
+        <button
+          class="nf-link-button"
+          type="button"
+          [disabled]="isMembersLoading()"
+          (click)="refreshSelectedMembers()"
+        >
+          Refresh
+        </button>
+        <button
+          class="nf-icon-button"
+          type="button"
+          aria-label="Close dialog"
+          (click)="closeMembersDialog()"
+        >
           <fa-icon icon="times" />
         </button>
-      </header>
+      </div>
+    </header>
 
-      <form class="nf-form" [formGroup]="createForm" (ngSubmit)="createWorkspace()">
-        <label>
-          <span>Name</span>
-          <input type="text" formControlName="name" placeholder="Workspace name" autocomplete="organization" />
-        </label>
-        <label>
-          <span>Short name</span>
-          <input type="text" formControlName="slug" placeholder="team-workspace" autocomplete="off" />
-        </label>
-        <label>
-          <span>Description</span>
-          <textarea formControlName="description" rows="3" placeholder="Optional workspace description"></textarea>
-        </label>
-        <footer class="nf-dialog__footer">
-          <button class="nf-button nf-button--secondary" type="button" (click)="closeCreateDialog()">Cancel</button>
-          <button class="nf-button" type="submit" [disabled]="createForm.invalid || isSaving()">
-            {{ isSaving() ? 'Creating...' : 'Create workspace' }}
-          </button>
-        </footer>
-      </form>
-    </section>
-  </div>
-}
-
-@if (acceptDialogOpen()) {
-  <div class="nf-dialog-backdrop" role="presentation" (click)="closeAcceptDialog()">
-    <section class="nf-dialog" role="dialog" aria-modal="true" aria-labelledby="accept-invitation-title" (click)="$event.stopPropagation()">
-      <header class="nf-dialog__header">
-        <div>
-          <h2 id="accept-invitation-title">Accept invitation</h2>
-          <p>Paste the invitation code you received.</p>
-        </div>
-        <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeAcceptDialog()">
-          <fa-icon icon="times" />
-        </button>
-      </header>
-
-      <form class="nf-form" [formGroup]="acceptForm" (ngSubmit)="acceptInvitation()">
-        <label>
-          <span>Invitation code</span>
-          <input type="text" formControlName="token" placeholder="Paste code" autocomplete="off" />
-        </label>
-        <footer class="nf-dialog__footer">
-          <button class="nf-button nf-button--secondary" type="button" (click)="closeAcceptDialog()">Cancel</button>
-          <button class="nf-button" type="submit" [disabled]="acceptForm.invalid || isAccepting()">
-            {{ isAccepting() ? 'Accepting...' : 'Accept invitation' }}
-          </button>
-        </footer>
-      </form>
-    </section>
-  </div>
-}
-
-@if (inviteDialogOpen()) {
-  <div class="nf-dialog-backdrop" role="presentation" (click)="closeInviteDialog()">
-    <section class="nf-dialog" role="dialog" aria-modal="true" aria-labelledby="invite-user-title" (click)="$event.stopPropagation()">
-      <header class="nf-dialog__header">
-        <div>
-          <h2 id="invite-user-title">Invite member</h2>
-          <p>{{ selectedWorkspace()?.name || 'Selected workspace' }}</p>
-        </div>
-        <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeInviteDialog()">
-          <fa-icon icon="times" />
-        </button>
-      </header>
-
-      <form class="nf-form" [formGroup]="inviteForm" (ngSubmit)="sendInvitation()">
-        <label>
-          <span>Email</span>
-          <input type="email" formControlName="email" placeholder="teammate@example.com" autocomplete="email" />
-        </label>
-        <label>
-          <span>Role</span>
-          <select formControlName="role">
-            @for (role of roleOptions; track role) {
-              <option [value]="role">{{ role }}</option>
+    <div class="nf-dialog__body">
+      @if (isMembersLoading()) {
+      <jhi-state-panel
+        tone="loading"
+        title="Loading members"
+        description="Fetching workspace members."
+      />
+      } @else if (membersError()) {
+      <jhi-state-panel
+        tone="error"
+        title="Members unavailable"
+        [description]="membersError() || ''"
+      />
+      } @else if (members().length === 0) {
+      <jhi-state-panel
+        title="No members yet"
+        description="Members will appear here after they join this workspace."
+      />
+      } @else {
+      <div class="nf-table-wrap">
+        <table class="nf-table nf-table--compact">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (member of members(); track trackMember($index, member)) {
+            <tr>
+              <td>
+                <div class="nf-workspace-name">
+                  <strong>{{ getMemberName(member) }}</strong>
+                  @if (getMemberEmail(member)) {
+                  <span>{{ getMemberEmail(member) }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="nf-pill">{{ member.role || '-' }}</span>
+              </td>
+              <td>
+                <span
+                  class="nf-status"
+                  [class.nf-status--muted]="member.active !== true"
+                >
+                  {{ getActiveLabel(member.active) }}
+                </span>
+              </td>
+            </tr>
             }
-          </select>
-        </label>
-        <footer class="nf-dialog__footer">
-          <button class="nf-button nf-button--secondary" type="button" (click)="closeInviteDialog()">Cancel</button>
-          <button class="nf-button" type="submit" [disabled]="inviteForm.invalid || isInviting()">
-            {{ isInviting() ? 'Sending...' : 'Send invitation' }}
-          </button>
-        </footer>
-      </form>
-    </section>
-  </div>
-}
-
-@if (membersDialogOpen()) {
-  <div class="nf-dialog-backdrop" role="presentation" (click)="closeMembersDialog()">
-    <section
-      class="nf-dialog nf-dialog--wide"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="workspace-members-title"
-      (click)="$event.stopPropagation()"
-    >
-      <header class="nf-dialog__header">
-        <div>
-          <h2 id="workspace-members-title">Members</h2>
-          <p>{{ selectedWorkspace()?.name || 'Selected workspace' }}</p>
-        </div>
-        <div class="nf-dialog__tools">
-          <button class="nf-link-button" type="button" [disabled]="isMembersLoading()" (click)="refreshSelectedMembers()">Refresh</button>
-          <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeMembersDialog()">
-            <fa-icon icon="times" />
-          </button>
-        </div>
-      </header>
-
-      <div class="nf-dialog__body">
-        @if (isMembersLoading()) {
-          <jhi-state-panel tone="loading" title="Loading members" description="Fetching workspace members." />
-        } @else if (membersError()) {
-          <jhi-state-panel tone="error" title="Members unavailable" [description]="membersError() || ''" />
-        } @else if (members().length === 0) {
-          <jhi-state-panel title="No members yet" description="Members will appear here after they join this workspace." />
-        } @else {
-          <div class="nf-table-wrap">
-            <table class="nf-table nf-table--compact">
-              <thead>
-                <tr>
-                  <th>Member</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (member of members(); track trackMember($index, member)) {
-                  <tr>
-                    <td>
-                      <div class="nf-workspace-name">
-                        <strong>{{ getMemberName(member) }}</strong>
-                        @if (getMemberEmail(member)) {
-                          <span>{{ getMemberEmail(member) }}</span>
-                        }
-                      </div>
-                    </td>
-                    <td>
-                      <span class="nf-pill">{{ member.role || '-' }}</span>
-                    </td>
-                    <td>
-                      <span class="nf-status" [class.nf-status--muted]="member.active !== true">
-                        {{ getActiveLabel(member.active) }}
-                      </span>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
+          </tbody>
+        </table>
       </div>
-    </section>
-  </div>
-}
-
-@if (invitationsDialogOpen()) {
-  <div class="nf-dialog-backdrop" role="presentation" (click)="closeInvitationsDialog()">
-    <section
-      class="nf-dialog nf-dialog--wide"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="workspace-invitations-title"
-      (click)="$event.stopPropagation()"
-    >
-      <header class="nf-dialog__header">
-        <div>
-          <h2 id="workspace-invitations-title">Pending invitations</h2>
-          <p>{{ selectedWorkspace()?.name || 'Selected workspace' }}</p>
-        </div>
-        <div class="nf-dialog__tools">
-          <button class="nf-link-button" type="button" [disabled]="isInvitationsLoading()" (click)="refreshSelectedInvitations()">
-            Refresh
-          </button>
-          <button class="nf-icon-button" type="button" aria-label="Close dialog" (click)="closeInvitationsDialog()">
-            <fa-icon icon="times" />
-          </button>
-        </div>
-      </header>
-
-      <div class="nf-dialog__body">
-        @if (invitationsSuccess()) {
-          <div class="nf-toast nf-toast--success nf-toast--dialog">{{ invitationsSuccess() }}</div>
-        }
-
-        @if (isInvitationsLoading()) {
-          <jhi-state-panel tone="loading" title="Loading invitations" description="Fetching pending invitations." />
-        } @else if (invitationsError()) {
-          <jhi-state-panel tone="error" title="Invitations unavailable" [description]="invitationsError() || ''" />
-        } @else if (invitations().length === 0) {
-          <jhi-state-panel title="No pending invitations" description="New invitations will appear here after they are created." />
-        } @else {
-          <div class="nf-table-wrap">
-            <table class="nf-table nf-table--compact">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Expires</th>
-                  <th class="nf-table__actions">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (invitation of invitations(); track trackInvitation($index, invitation)) {
-                  <tr>
-                    <td>
-                      <div class="nf-workspace-name">
-                        <strong>{{ getInvitationEmail(invitation) }}</strong>
-                        @if (invitation.token) {
-                          <span>{{ invitation.token }}</span>
-                        }
-                      </div>
-                    </td>
-                    <td>
-                      <span class="nf-pill">{{ invitation.role || '-' }}</span>
-                    </td>
-                    <td>
-                      <span class="nf-status" [class.nf-status--muted]="invitation.status !== 'PENDING'">
-                        {{ invitation.status || '-' }}
-                      </span>
-                    </td>
-                    <td>{{ formatDate(invitation.expiresAt) }}</td>
-                    <td class="nf-table__actions">
-                      @if (getInvitationId(invitation) !== null) {
-                        <button
-                          class="nf-link-button nf-link-button--danger"
-                          type="button"
-                          [disabled]="revokingInvitationId() === getInvitationId(invitation)"
-                          (click)="revokeInvitation(invitation)"
-                        >
-                          {{ revokingInvitationId() === getInvitationId(invitation) ? 'Revoking...' : 'Revoke' }}
-                        </button>
-                      }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
+      }
+    </div>
+  </section>
+</div>
+} @if (invitationsDialogOpen()) {
+<div
+  class="nf-dialog-backdrop"
+  role="presentation"
+  (click)="closeInvitationsDialog()"
+>
+  <section
+    class="nf-dialog nf-dialog--wide"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="workspace-invitations-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="nf-dialog__header">
+      <div>
+        <h2 id="workspace-invitations-title">Pending invitations</h2>
+        <p>{{ selectedWorkspace()?.name || 'Selected workspace' }}</p>
       </div>
-    </section>
-  </div>
+      <div class="nf-dialog__tools">
+        <button
+          class="nf-link-button"
+          type="button"
+          [disabled]="isInvitationsLoading()"
+          (click)="refreshSelectedInvitations()"
+        >
+          Refresh
+        </button>
+        <button
+          class="nf-icon-button"
+          type="button"
+          aria-label="Close dialog"
+          (click)="closeInvitationsDialog()"
+        >
+          <fa-icon icon="times" />
+        </button>
+      </div>
+    </header>
+
+    <div class="nf-dialog__body">
+      @if (invitationsSuccess()) {
+      <div class="nf-toast nf-toast--success nf-toast--dialog">
+        {{ invitationsSuccess() }}
+      </div>
+      } @if (isInvitationsLoading()) {
+      <jhi-state-panel
+        tone="loading"
+        title="Loading invitations"
+        description="Fetching pending invitations."
+      />
+      } @else if (invitationsError()) {
+      <jhi-state-panel
+        tone="error"
+        title="Invitations unavailable"
+        [description]="invitationsError() || ''"
+      />
+      } @else if (invitations().length === 0) {
+      <jhi-state-panel
+        title="No pending invitations"
+        description="New invitations will appear here after they are created."
+      />
+      } @else {
+      <div class="nf-table-wrap">
+        <table class="nf-table nf-table--compact">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Expires</th>
+              <th class="nf-table__actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (invitation of invitations(); track trackInvitation($index,
+            invitation)) {
+            <tr>
+              <td>
+                <div class="nf-workspace-name">
+                  <strong>{{ getInvitationEmail(invitation) }}</strong>
+                  @if (invitation.token) {
+                  <span>{{ invitation.token }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="nf-pill">{{ invitation.role || '-' }}</span>
+              </td>
+              <td>
+                <span
+                  class="nf-status"
+                  [class.nf-status--muted]="invitation.status !== 'PENDING'"
+                >
+                  {{ invitation.status || '-' }}
+                </span>
+              </td>
+              <td>{{ formatDate(invitation.expiresAt) }}</td>
+              <td class="nf-table__actions">
+                @if (getInvitationId(invitation) !== null) {
+                <button
+                  class="nf-link-button nf-link-button--danger"
+                  type="button"
+                  [disabled]="revokingInvitationId() === getInvitationId(invitation)"
+                  (click)="revokeInvitation(invitation)"
+                >
+                  {{ revokingInvitationId() === getInvitationId(invitation) ?
+                  'Revoking...' : 'Revoke' }}
+                </button>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </div>
+  </section>
+</div>
 }

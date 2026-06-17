@@ -4,21 +4,172 @@
   eyebrow="Projects"
   title="Projects"
   [description]="
-    workspaceName() ? 'Workspace: ' + workspaceName() : 'No workspace selected. Create or join a workspace to manage projects.'
+    workspaceName()
+      ? 'Workspace: ' + workspaceName()
+      : 'No workspace selected. Create or join a workspace to manage projects.'
   "
 >
   <div class="nf-header-actions">
     <div class="nf-workspace-context">
       <span>Workspace</span>
-      <strong>{{ workspaceName() || 'None selected' }}</strong>
+      <strong>{{ workspaceName() || "None selected" }}</strong>
     </div>
-    <p-button label="Create project" icon="pi pi-plus" [disabled]="organizationId() === null" (onClick)="openCreateDialog()" />
+    <p-button
+      label="Create project"
+      icon="pi pi-plus"
+      [disabled]="organizationId() === null"
+      (onClick)="openCreateDialog()"
+    />
   </div>
 </jhi-page-header>
 
-<jhi-section-panel title="Projects" description="Paginated project records from project-service.">
+<jhi-section-panel
+  title="Projects"
+  description="Project records from project-service."
+>
+  <div panel-actions class="nf-view-switch" aria-label="Project view">
+    <p-button
+      ariaLabel="Card view"
+      icon="pi pi-th-large"
+      size="small"
+      [outlined]="viewMode() !== 'cards'"
+      (onClick)="setViewMode('cards')"
+    />
+    <p-button
+      ariaLabel="Table view"
+      icon="pi pi-table"
+      size="small"
+      [outlined]="viewMode() !== 'table'"
+      (onClick)="setViewMode('table')"
+    />
+  </div>
+
   @if (errorMessage()) {
-    <jhi-state-panel tone="error" title="Projects unavailable" [description]="errorMessage()!" />
+    <jhi-state-panel
+      tone="error"
+      title="Projects unavailable"
+      [description]="errorMessage()!"
+    />
+  } @else if (viewMode() === "cards") {
+    @if (isLoading()) {
+      <div class="nf-project-grid">
+        @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+          <article class="nf-project-card nf-project-card--loading">
+            <p-skeleton width="3rem" height="3rem" />
+            <p-skeleton width="70%" height="1rem" />
+            <p-skeleton width="95%" height="0.8rem" />
+            <p-skeleton width="60%" height="0.8rem" />
+          </article>
+        }
+      </div>
+    } @else if (projects().length === 0) {
+      <div class="nf-project-empty">
+        <img
+          src="content/images/nexaflow/empty-projects.svg"
+          alt="Empty project board illustration"
+          loading="lazy"
+        />
+        <jhi-state-panel
+          title="No projects yet"
+          description="Create the first project for this organization."
+        >
+          <p-button
+            label="Create project"
+            icon="pi pi-plus"
+            (onClick)="openCreateDialog()"
+          />
+        </jhi-state-panel>
+      </div>
+    } @else {
+      <div class="nf-project-grid">
+        @for (project of projects(); track trackProject($index, project)) {
+          <article
+            class="nf-project-card"
+            [class.nf-project-card--archived]="project.status === 'ARCHIVED'"
+          >
+            <header>
+              <a
+                class="nf-project-avatar"
+                [routerLink]="['/projects', project.id]"
+                [attr.aria-label]="'Open ' + (project.name || 'project')"
+              >
+                {{ getProjectInitials(project) }}
+              </a>
+              <div>
+                <a
+                  class="nf-project-card__title"
+                  [routerLink]="['/projects', project.id]"
+                  >{{ project.name || "Unnamed project" }}</a
+                >
+                <p>
+                  {{
+                    project.description || "No project description provided."
+                  }}
+                </p>
+              </div>
+              <p-menu
+                #cardMenu
+                [model]="getProjectMenuItems(project)"
+                [popup]="true"
+                appendTo="body"
+              />
+              <p-button
+                ariaLabel="Project actions"
+                icon="pi pi-ellipsis-v"
+                severity="secondary"
+                [rounded]="true"
+                [text]="true"
+                (onClick)="cardMenu.toggle($event)"
+              />
+            </header>
+
+            <div class="nf-project-meta">
+              <span
+                ><p-tag
+                  [value]="getStatusLabel(project.status)"
+                  [severity]="getStatusSeverity(project.status)"
+              /></span>
+              <span>Created by {{ project.createdBy || "Unknown" }}</span>
+              <span>{{ project.createdAt | date: "mediumDate" }}</span>
+            </div>
+
+            <div class="nf-project-progress">
+              <span>Task progress</span>
+              <strong>Available in project details</strong>
+            </div>
+
+            <footer>
+              <p-button
+                label="Open project"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                size="small"
+                [routerLink]="['/projects', project.id]"
+              />
+              @if (project.updatedAt) {
+                <small
+                  >Updated {{ project.updatedAt | date: "mediumDate" }}</small
+                >
+              }
+            </footer>
+          </article>
+        }
+      </div>
+
+      <div class="nf-card-pagination">
+        <span
+          >{{ first() + 1 }} - {{ first() + projects().length }} of
+          {{ totalItems() }} projects</span
+        >
+        <p-paginator
+          [first]="first()"
+          [rows]="rows()"
+          [totalRecords]="totalItems()"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          (onPageChange)="loadProjects($event)"
+        />
+      </div>
+    }
   } @else {
     <p-table
       styleClass="nf-prime-table"
@@ -43,7 +194,9 @@
           <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
           <th>Status</th>
           <th>Created by</th>
-          <th pSortableColumn="createdAt">Created <p-sortIcon field="createdAt" /></th>
+          <th pSortableColumn="createdAt">
+            Created <p-sortIcon field="createdAt" />
+          </th>
           <th class="nf-actions-cell">Actions</th>
         </tr>
       </ng-template>
@@ -51,36 +204,43 @@
       <ng-template pTemplate="body" let-project>
         <tr>
           <td>
-            <div class="nf-project-name">
-              <strong>{{ project.name || 'Unnamed project' }}</strong>
+            <a class="nf-project-name" [routerLink]="['/projects', project.id]">
+              <strong>{{ project.name || "Unnamed project" }}</strong>
               @if (project.description) {
                 <span>{{ project.description }}</span>
               }
-            </div>
+            </a>
           </td>
-          <td><p-tag [value]="getStatusLabel(project.status)" [severity]="getStatusSeverity(project.status)" /></td>
-          <td>{{ project.createdBy || '-' }}</td>
-          <td>{{ project.createdAt | date: 'mediumDate' }}</td>
+          <td>
+            <p-tag
+              [value]="getStatusLabel(project.status)"
+              [severity]="getStatusSeverity(project.status)"
+            />
+          </td>
+          <td>{{ project.createdBy || "-" }}</td>
+          <td>{{ project.createdAt | date: "mediumDate" }}</td>
           <td class="nf-actions-cell">
+            <p-menu
+              #rowMenu
+              [model]="getProjectMenuItems(project)"
+              [popup]="true"
+              appendTo="body"
+            />
             <div class="nf-action-row">
-              <p-button label="Open" size="small" [outlined]="true" [routerLink]="['/projects', project.id]" />
               <p-button
-                label="Edit"
+                label="Open"
+                size="small"
+                [outlined]="true"
+                [routerLink]="['/projects', project.id]"
+              />
+              <p-button
+                ariaLabel="Project actions"
+                icon="pi pi-ellipsis-v"
                 size="small"
                 severity="secondary"
                 [outlined]="true"
-                [disabled]="project.status === 'ARCHIVED'"
-                (onClick)="openEditDialog(project)"
+                (onClick)="rowMenu.toggle($event)"
               />
-              <p-button
-                [label]="project.status === 'ARCHIVED' ? 'Restore' : 'Archive'"
-                [icon]="project.status === 'ARCHIVED' ? 'pi pi-refresh' : 'pi pi-box'"
-                [severity]="project.status === 'ARCHIVED' ? 'info' : 'secondary'"
-                [outlined]="true"
-                size="small"
-                (onClick)="toggleArchive(project)"
-              />
-              <p-button label="Delete" size="small" severity="danger" [outlined]="true" (onClick)="deleteProject(project)" />
             </div>
           </td>
         </tr>
@@ -89,8 +249,15 @@
       <ng-template pTemplate="emptymessage">
         <tr>
           <td colspan="5">
-            <jhi-state-panel title="No projects yet" description="Create the first project for this organization.">
-              <p-button label="Create project" icon="pi pi-plus" (onClick)="openCreateDialog()" />
+            <jhi-state-panel
+              title="No projects yet"
+              description="Create the first project for this organization."
+            >
+              <p-button
+                label="Create project"
+                icon="pi pi-plus"
+                (onClick)="openCreateDialog()"
+              />
             </jhi-state-panel>
           </td>
         </tr>

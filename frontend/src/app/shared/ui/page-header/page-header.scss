@@ -13,7 +13,7 @@
 .nf-page-header__eyebrow {
   display: inline-flex;
   margin-bottom: 0.45rem;
-  color: #7dd3fc;
+  color: var(--nf-primary);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0;
@@ -22,7 +22,7 @@
 
 h1 {
   margin: 0;
-  color: #f8fafc;
+  color: var(--nf-text);
   font-size: clamp(1.45rem, 1.9vw, 2rem);
   font-weight: 650;
   line-height: 1.15;
@@ -31,7 +31,7 @@ h1 {
 p {
   max-width: 44rem;
   margin: 0.65rem 0 0;
-  color: #94a3b8;
+  color: var(--nf-muted);
   font-size: 0.94rem;
   line-height: 1.65;
 }
