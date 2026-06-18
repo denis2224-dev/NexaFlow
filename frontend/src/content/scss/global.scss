@@ -312,3 +312,11 @@ button:focus-visible {
 .nf-prime-table .p-datatable-wrapper {
   overflow-x: auto;
 }
+
+body a {
+  color: var(--nf-primary);
+}
+
+body a:hover {
+  color: var(--nf-primary-strong);
+}
