@@ -26,7 +26,7 @@ management:
         enabled: false
   zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
     tracing:
-      endpoint: http://localhost:9411/api/v2/spans
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://zipkin:9411/api/v2/spans}
   tracing:
     sampling:
       probability: 1.0 # report 100% of traces
@@ -41,17 +41,17 @@ spring:
     consul:
       discovery:
         prefer-ip-address: true
-      host: localhost
-      port: 8500
+      host: ${SPRING_CLOUD_CONSUL_HOST:consul}
+      port: ${SPRING_CLOUD_CONSUL_PORT:8500}
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
   liquibase:
     contexts: prod
-    url: jdbc:postgresql://localhost:5432/NexaFlow
+    url: ${SPRING_LIQUIBASE_URL}
   mail:
-    host: localhost
-    port: 25
+    host: ${SPRING_MAIL_HOST:mail}
+    port: ${SPRING_MAIL_PORT:25}
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/NexaFlow
+    url: ${SPRING_R2DBC_URL}
   thymeleaf:
     cache: true
 
@@ -104,8 +104,8 @@ jhipster:
     use-json-format: false # By default, logs are not in Json format
     logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
       enabled: false
-      host: localhost
-      port: 5000
+      host: ${JHIPSTER_LOGGING_LOGSTASH_HOST:logstash}
+      port: ${JHIPSTER_LOGGING_LOGSTASH_PORT:5000}
       ring-buffer-size: 512
 # ===================================================================
 # Application specific properties
