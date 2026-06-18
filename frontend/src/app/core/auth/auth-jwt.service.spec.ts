@@ -3,7 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
-import { AUTHENTICATION_TOKEN_KEY } from 'app/shared/jhipster/constants';
 
 import { StateStorageService } from './state-storage.service';
 
@@ -13,11 +12,16 @@ describe('Auth JWT', () => {
   let mockStorageService: StateStorageService;
 
   beforeEach(() => {
+    mockStorageService = {
+      getAuthenticationToken: vitest.fn(),
+      storeAuthenticationToken: vitest.fn(),
+      clearAuthenticationToken: vitest.fn(),
+    } as unknown as StateStorageService;
+
     TestBed.configureTestingModule({
-      providers: [provideHttpClientTesting()],
+      providers: [provideHttpClientTesting(), { provide: StateStorageService, useValue: mockStorageService }],
     });
 
-    mockStorageService = TestBed.inject(StateStorageService);
     httpMock = TestBed.inject(HttpTestingController);
     service = TestBed.inject(AuthServerProvider);
   });
@@ -29,13 +33,13 @@ describe('Auth JWT', () => {
     });
 
     it('should return token from session storage if local storage is empty', () => {
-      sessionStorage.setItem(AUTHENTICATION_TOKEN_KEY, JSON.stringify('sessionStorageToken'));
+      mockStorageService.getAuthenticationToken = vitest.fn(() => 'sessionStorageToken');
       const result = service.getToken();
       expect(result).toEqual('sessionStorageToken');
     });
 
     it('should return token from localstorage storage', () => {
-      localStorage.setItem(AUTHENTICATION_TOKEN_KEY, JSON.stringify('localStorageToken'));
+      mockStorageService.getAuthenticationToken = vitest.fn(() => 'localStorageToken');
       const result = service.getToken();
       expect(result).toEqual('localStorageToken');
     });
